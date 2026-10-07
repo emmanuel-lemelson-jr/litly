@@ -106,7 +106,8 @@
       field-sizing: content;
       overflow-y: auto;
     }
-    textarea::placeholder { color: #6e6e73; }
+    textarea:placeholder-shown { height: 27px; overflow: hidden; }
+    textarea::placeholder { color: #6e6e73; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 10px; }
     .me { display: flex; align-items: center; gap: 10px; font-size: 14px; color: var(--muted); min-width: 0; }
     .me img { width: 28px; height: 28px; border-radius: 50%; flex: none; }
@@ -343,15 +344,94 @@ async function load(force = false) {
 
 const body = $("body");
 function adjustHeight() {
+  if (body.value.length === 0) {
+    body.style.height = "";
+    return;
+  }
   if (window.CSS && CSS.supports && CSS.supports("field-sizing", "content")) return;
   body.style.height = "auto";
   body.style.height = Math.min(body.scrollHeight, 260) + "px";
 }
+
+const PREFIX = "Last night I couldn't sleep because ";
+const PHRASES = [
+  "my mind wouldn't shut off…",
+  "I had an idea I couldn't stop thinking about…",
+  "I kept replaying a conversation from 2019…",
+  "I drank coffee way too late…",
+  "I was stressing over things I can't control…",
+  "I was wondering where all the time went…",
+  "the room was too warm and pillows were hot…",
+  "tomorrow has too much going on…"
+];
+
+let phraseIdx = 0;
+let charIdx = 0;
+let isDeleting = false;
+let typeTimer = null;
+let isPaused = false;
+
+function stepTyping() {
+  if (isPaused || body.value.length > 0) return;
+  if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    body.placeholder = "Last night I couldn't sleep because…";
+    return;
+  }
+
+  const currentPhrase = PHRASES[phraseIdx];
+  if (!isDeleting) {
+    charIdx++;
+    body.placeholder = PREFIX + currentPhrase.slice(0, charIdx);
+    if (charIdx >= currentPhrase.length) {
+      isDeleting = true;
+      typeTimer = setTimeout(stepTyping, 2400);
+      return;
+    }
+    typeTimer = setTimeout(stepTyping, 40 + Math.random() * 25);
+  } else {
+    charIdx--;
+    body.placeholder = PREFIX + currentPhrase.slice(0, charIdx);
+    if (charIdx <= 0) {
+      isDeleting = false;
+      phraseIdx = (phraseIdx + 1) % PHRASES.length;
+      typeTimer = setTimeout(stepTyping, 450);
+      return;
+    }
+    typeTimer = setTimeout(stepTyping, 22);
+  }
+}
+
+function startTyping() {
+  clearTimeout(typeTimer);
+  isPaused = false;
+  stepTyping();
+}
+
+function stopTyping() {
+  clearTimeout(typeTimer);
+  isPaused = true;
+}
+
+body.addEventListener("focus", () => {
+  stopTyping();
+});
+
+body.addEventListener("blur", () => {
+  if (body.value.length === 0) {
+    typeTimer = setTimeout(startTyping, 800);
+  }
+});
+
 body.addEventListener("input", () => {
   adjustHeight();
   const n = body.value.trim().length;
   $("count").textContent = body.value.length > 400 ? 500 - body.value.length : "";
   $("post-btn").disabled = n < 3;
+  if (body.value.length === 0) {
+    typeTimer = setTimeout(startTyping, 800);
+  } else {
+    stopTyping();
+  }
 });
 
 $("post-form").addEventListener("submit", async (e) => {
@@ -367,6 +447,7 @@ $("post-form").addEventListener("submit", async (e) => {
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || "Couldn't post.");
     e.target.reset(); $("count").textContent = ""; adjustHeight();
+    typeTimer = setTimeout(startTyping, 1200);
     msg.textContent = "Posted. You're not the only one.";
     await load();
     $("list").firstElementChild?.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -376,6 +457,7 @@ $("post-form").addEventListener("submit", async (e) => {
 });
 
 adjustHeight();
+typeTimer = setTimeout(startTyping, 1200);
 
 load();
 setInterval(load, 20000);
