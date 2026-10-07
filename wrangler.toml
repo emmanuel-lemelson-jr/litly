@@ -3,6 +3,7 @@ main = "src/worker.js"
 compatibility_date = "2025-01-01"
 account_id = "724ddd72d3f69382eca6ffaa831086ef"
 workers_dev = true
+compatibility_flags = ["nodejs_compat"]
 
 routes = [
   { pattern = "litly.com", custom_domain = true },

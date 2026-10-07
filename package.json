@@ -1,5 +1,5 @@
 {
-  "name": "zealous-bohr",
+  "name": "litly.com",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
@@ -16,7 +16,8 @@
   "type": "commonjs",
   "dependencies": {
     "@dicebear/collection": "^9.4.2",
-    "@dicebear/core": "^9.4.3"
+    "@dicebear/core": "^9.4.3",
+    "better-auth": "^1.7.7"
   },
   "devDependencies": {
     "esbuild": "^0.28.2",

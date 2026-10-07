@@ -1,3 +1,5 @@
+import { createAuth } from "./auth.js";
+
 const DAY_MS = 24 * 60 * 60 * 1000;
 // The whole site resets at the same instant for everyone: 04:00 UTC daily
 // (midnight US Eastern during daylight time). Change this one number to move it.
@@ -92,6 +94,24 @@ async function listPosts(request, env) {
     p.replies = byPost.get(p.id) || [];
   }
   return json({ posts, now, resetAt: next });
+}
+
+// Public teaser for the sign-up page: only the top few posts by me-too, trimmed,
+// with no replies, so the full feed isn't exposed to logged-out visitors.
+async function topPosts(env) {
+  const now = Date.now();
+  const { start, next } = cycle(now);
+  const { results } = await env.DB.prepare(
+    `SELECT p.id, SUBSTR(p.body, 1, 180) AS body, p.avatar,
+       (SELECT COUNT(*) FROM metoos m WHERE m.post_id = p.id) AS metoo
+     FROM posts p WHERE p.created_at >= ? AND p.hidden = 0
+     ORDER BY metoo DESC, p.created_at DESC LIMIT 5`
+  )
+    .bind(start)
+    .all();
+  const res = json({ posts: results, now, resetAt: next });
+  res.headers.set("cache-control", "public, max-age=30");
+  return res;
 }
 
 async function createPost(request, env) {
@@ -268,7 +288,13 @@ export default {
       return Response.redirect(url.toString(), 301);
     }
     try {
+      if (url.pathname.startsWith("/api/auth/")) {
+        if (!env.BETTER_AUTH_SECRET) return json({ error: "Sign-in isn't set up." }, 503);
+        const auth = await createAuth(env, url.origin);
+        return await auth.handler(request);
+      }
       if (url.pathname === "/api/posts" && request.method === "GET") return await listPosts(request, env);
+      if (url.pathname === "/api/top" && request.method === "GET") return await topPosts(env);
       if (url.pathname === "/api/metoo" && request.method === "POST") return await toggleMeToo(request, env);
       if (url.pathname === "/api/replies" && request.method === "POST") return await createReply(request, env);
       if (url.pathname === "/api/posts" && request.method === "POST") return await createPost(request, env);
