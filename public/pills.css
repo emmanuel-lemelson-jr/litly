@@ -1,0 +1,38 @@
+/* Shared by the feed and the single-post page: action pills + toast */
+/* X-style action row: bare icons with counts, no background. Hover/active only changes color. */
+.pills { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 0 -10px; }
+.pill { display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 10px; border: 0; border-radius: 980px; background: none; color: #8a8a90; font: 500 14px var(--font); letter-spacing: -.01em; font-variant-numeric: tabular-nums; cursor: pointer; transition: color .15s, transform .1s; }
+.pill:hover { color: var(--text); }
+.pill:active { transform: scale(.94); }
+.pill:focus-visible { outline: 2px solid var(--link); outline-offset: 2px; }
+.pill svg { width: 19px; height: 19px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+.pill.on, .pill.on:hover { color: var(--link); }
+.pill.on svg { fill: currentColor; }
+.pill .n:empty { display: none; }
+/* icon-only in the main row (labels stay on the quieter reply pills) */
+.pills .pill > span:not(.n) { display: none; }
+/* quieter version used on replies */
+.pill.sm { height: 30px; padding: 0 10px; gap: 6px; background: none; color: #8a8a90; font-weight: 500; font-size: 13px; }
+.pill.sm:hover { color: var(--text); }
+.pill.sm.on { color: var(--link); }
+.pill.sm svg { width: 16px; height: 16px; }
+.toast { position: fixed; left: 50%; bottom: 28px; transform: translate(-50%, 12px); background: #2c2c2e; color: var(--text); font: 500 14px var(--font); padding: 10px 18px; border-radius: 980px; opacity: 0; pointer-events: none; transition: opacity .2s, transform .2s; z-index: 50; }
+.toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+/* Post cards, used by the feed and by profile pages */
+.plist { list-style: none; margin: 0; padding: 0; }
+.fpost { display: grid; grid-template-columns: 40px 1fr; gap: 14px; padding: 18px 0; border-top: 1px solid var(--hair); cursor: pointer; }
+.fpost > a > img, .fpost > img { width: 40px; height: 40px; border-radius: 50%; display: block; }
+.who { display: flex; gap: 8px; align-items: baseline; font-size: 14px; color: var(--muted); }
+.who b, .who a { color: var(--text); font-weight: 600; text-decoration: none; }
+.who a:hover { text-decoration: underline; }
+.fpost p { margin: 4px 0 0; font-size: 19px; line-height: 1.42; white-space: pre-wrap; overflow-wrap: anywhere; }
+.fpost.enter { animation: enter .5s cubic-bezier(.25,.1,.25,1); }
+@keyframes enter { from { opacity: 0; transform: translateY(-6px); } }
+.pimg { display: block; max-width: 100%; max-height: 520px; width: auto; height: auto; margin: 10px 0 0; border-radius: 16px; background: #161617; object-fit: contain; }
+.pill.del:hover { color: #ff453a; }
+.empty { color: var(--muted); padding: 40px 0; text-align: center; border-top: 1px solid var(--hair); }
+
+/* the first post sits right under the composer, no divider above it */
+.plist > .fpost:first-child { border-top: 0; }
+.empty { border-top: 0; }

@@ -10,17 +10,13 @@
   <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png?v=2">
   <meta name="color-scheme" content="dark">
   <meta name="theme-color" content="#000000">
+  <link rel="stylesheet" href="/nav.css">
   <style>
     :root { --bg:#000; --tile:#161617; --text:#f5f5f7; --muted:#86868b; --hair:#2a2a2c; --accent:#869ad5; --accent-hover:#9bb0ed; --accent-ink:#060913; --link:#9bb0ed; --err:#ff453a;
       --font:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text","Helvetica Neue",Helvetica,Arial,sans-serif; }
     * { box-sizing: border-box; }
     [hidden] { display: none !important; }
     body { margin:0; background:var(--bg); color:var(--text); font:17px/1.47 var(--font); letter-spacing:-.022em; -webkit-font-smoothing:antialiased; }
-    nav { height:56px; border-bottom:1px solid rgba(255,255,255,.06); }
-    nav .in { max-width:980px; height:100%; margin:0 auto; padding:0 22px; display:flex; align-items:center; justify-content:space-between; font-size:14px; }
-    nav img { height:40px; width:auto; display:block; }
-    nav a.back { color:var(--muted); text-decoration:none; }
-    nav a.back:hover { color:var(--text); }
     main { max-width:520px; margin:0 auto; padding:44px 22px 80px; }
     h1 { font-size:clamp(32px,6vw,44px); line-height:1.1; letter-spacing:-.02em; margin:0 0 28px; }
     .card { background:var(--tile); border-radius:20px; padding:24px; }
@@ -55,10 +51,12 @@
   </style>
 </head>
 <body>
-<nav><div class="in"><a href="/" aria-label="Litly home"><img src="/logo.svg" alt="Litly" width="130" height="40"></a><a class="back" href="/">Back to feed</a></div></nav>
+<nav><div class="in"><a href="/" class="nav-logo" aria-label="Litly"><img src="/logo.svg" alt="Litly" width="130" height="40"></a><div class="nav-auth" id="nav-auth"><a class="nav-btn" href="/signup">Log in</a></div></div></nav>
+<script src="/nav.js"></script>
 
 <main>
   <h1>Your account</h1>
+  <p id="viewp" hidden style="margin:-14px 0 24px"><a href="#" id="view" style="color:var(--link)">View your profile and posts</a></p>
   <section class="card" id="card" hidden>
     <div class="top">
       <img id="big" alt="" width="88" height="88">
@@ -119,7 +117,7 @@ function fillPicker(keep) {
 function show(p) {
   saved = { username: p.username, avatar: p.avatar };
   try { localStorage.setItem("litly_me", JSON.stringify({ username: p.username, avatar: p.avatar, src: avatarUri(p.avatar) })); } catch {}
-  $("show-user").textContent = p.username;
+  $("show-user").textContent = p.username; $("view").href = "/u/" + p.username;
   $("username").value = p.username;
   $("name").textContent = p.name || "";
   avatar = p.avatar; $("big").src = avatarUri(p.avatar);
@@ -134,6 +132,7 @@ fetch("/api/profile").then((r) => {
   if (!p) return;
   show(p);
   $("card").hidden = false; $("signout").hidden = false;
+  $("view").href = "/u/" + p.username; $("viewp").hidden = false;
 }).catch(() => { $("msg").textContent = "Couldn't load your account."; });
 
 $("more").addEventListener("click", () => fillPicker(avatar));

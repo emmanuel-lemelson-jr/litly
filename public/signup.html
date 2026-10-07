@@ -7,6 +7,7 @@
   <meta name="description" content="Can't sleep? You're not alone. Join everyone who's up late. Choose to stay anonymous.">
   <link rel="canonical" href="https://litly.com/signup">
   <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=2">
+  <link rel="stylesheet" href="/pills.css">
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png?v=2">
   <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png?v=2">
   <meta name="color-scheme" content="dark">
@@ -50,7 +51,7 @@
     footer { padding: 0 0 24px; color: #6e6e73; font-size: 12px; }
 
     /* right: mascot + live top posts */
-    .right { position: relative; overflow: hidden; display: flex; flex-direction: column; align-items: center; padding: 40px 32px 0; }
+    .right { position: relative; overflow: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 0; }
     .right::before {
       content: ""; position: absolute; left: 50%; top: -8%; width: 80%; aspect-ratio: 1; transform: translateX(-50%);
       background: radial-gradient(closest-side, rgba(134,154,213,.28), rgba(134,154,213,.08) 55%, transparent 75%); pointer-events: none;
@@ -60,25 +61,20 @@
       -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 50%, rgba(0,0,0,.15) 78%, transparent 94%);
       mask-image: linear-gradient(to bottom, #000 0%, #000 50%, rgba(0,0,0,.15) 78%, transparent 94%);
     }
-    .clock-wrap { position: relative; z-index: 2; text-align: center; margin: 0 0 16px; }
-    .clock { display: flex; justify-content: center; align-items: flex-start; gap: clamp(14px, 2vw, 24px); }
-    .unit { display: flex; flex-direction: column; align-items: center; min-width: 1.6em; }
-    .unit b { font-size: clamp(40px, 5vw, 60px); font-weight: 200; line-height: 1; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
-    .unit span { margin-top: 8px; font-size: 11px; font-weight: 500; letter-spacing: .14em; color: var(--muted); }
-    .clock-cap { color: var(--muted); font-size: 14px; margin: 6px 0 0; }
-
-    /* one vertical lane of cards drifting upward, fading in at the bottom and out at the top */
-    .lane { position: relative; z-index: 2; width: 100%; max-width: 520px; flex: 1; min-height: 360px; max-height: 480px; overflow: hidden; margin-bottom: 24px;
-      -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 22%, #000 78%, transparent 100%); mask-image: linear-gradient(to bottom, transparent 0%, #000 22%, #000 78%, transparent 100%); }
-    .cards { list-style: none; margin: 0; padding: 0; animation: drift var(--dur, 40s) linear infinite; will-change: transform; }
+    /* one horizontal lane of cards drifting left, fading at both edges */
+    .lane { position: relative; z-index: 2; width: 100%; overflow: hidden; margin-top: 8px;
+      -webkit-mask-image: linear-gradient(to right, transparent 0%, #000 12%, #000 88%, transparent 100%); mask-image: linear-gradient(to right, transparent 0%, #000 12%, #000 88%, transparent 100%); }
+    .cards { list-style: none; margin: 0; padding: 0; display: flex; width: max-content; animation: drift var(--dur, 40s) linear infinite; will-change: transform; }
     .lane:hover .cards { animation-play-state: paused; }
-    @keyframes drift { to { transform: translateY(-50%); } }
-    .card { display: grid; grid-template-columns: 38px 1fr; gap: 12px; padding: 14px 16px; margin-bottom: 12px; border-radius: 18px; background: rgba(22,22,23,.82); border: 1px solid rgba(255,255,255,.06); }
-    .card img { width: 38px; height: 38px; border-radius: 50%; }
-    .card b { font-size: 14px; font-weight: 600; }
-    .card p { margin: 2px 0 0; font-size: 16px; line-height: 1.38; overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
-    .card .mt { display: inline-flex; align-items: center; gap: 2px; margin-top: 8px; font-size: 13px; color: var(--link); font-variant-numeric: tabular-nums; }
-    .cards-empty { color: var(--muted); text-align: center; padding: 20px 0; }
+    @keyframes drift { to { transform: translateX(-50%); } }
+    /* Cards mirror a feed post (avatar, name + time, text, X-style action row), just boxed for the carousel */
+    .card { flex: none; width: 340px; display: grid; grid-template-columns: 40px 1fr; gap: 14px; padding: 16px 18px 6px; margin-right: 12px; border-radius: 20px; background: rgba(22,22,23,.82); border: 1px solid rgba(255,255,255,.06); }
+    .card img { width: 40px; height: 40px; border-radius: 50%; }
+    .card .who { display: flex; gap: 8px; align-items: baseline; font-size: 14px; color: var(--muted); }
+    .card .who b { color: var(--text); font-weight: 600; }
+    .card p { margin: 4px 0 0; font-size: 19px; line-height: 1.42; overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+    .card .pills { pointer-events: none; }
+    .cards-empty { color: var(--muted); text-align: center; padding: 20px 0; min-width: 340px; }
 
     @media (max-width: 860px) {
       .page { grid-template-columns: 1fr; }
@@ -87,7 +83,7 @@
       .form { margin: auto; padding: 28px 0; max-width: 420px; text-align: center; }
       footer { padding-bottom: 20px; text-align: center; }
     }
-    @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } .lane { overflow-y: auto; } }
+    @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } .lane { overflow-x: auto; } }
   </style>
 </head>
 <body>
@@ -118,63 +114,53 @@
       <source srcset="/sleepless.webp" type="image/webp">
       <img class="mascot" src="/sleepless.gif" alt="Tired character lying awake in bed" width="400" height="376" fetchpriority="high">
     </picture>
-    <div class="clock-wrap"><div class="clock" id="clock" role="timer" aria-label="Time until reset"><div class="unit"><b id="c-h">--</b><span>HRS</span></div><div class="unit"><b id="c-m">--</b><span>MIN</span></div><div class="unit"><b id="c-s">--</b><span>SEC</span></div></div><p class="clock-cap">until the feed resets</p></div>
     <div class="lane"><ul class="cards" id="cards"></ul></div>
   </section>
 </div>
 
 <script src="/avatars.js"></script>
+<script src="/common.js"></script>
 <script>
 const $ = (id) => document.getElementById(id);
-const ADJ = ["Restless","Wired","Sleepless","Quiet","Wandering","Drifting","Midnight","Hazy","Wide-eyed","Lingering"];
-const NOUN = ["Owl","Moth","Fox","Comet","Moon","Firefly","Cat","Star","Raccoon","Lantern"];
-const nameFor = (s) => `${ADJ[parseInt(s.slice(0, 4), 16) % ADJ.length]} ${NOUN[parseInt(s.slice(4, 8), 16) % NOUN.length]}`;
-const seedOf = (p) => p.avatar || String(p.id).padStart(12, "0");
-
-function card(p) {
+function card(p, serverNow) {
   const seed = seedOf(p);
   const li = document.createElement("li");
   li.className = "card";
-  const img = new Image(38, 38); img.alt = ""; img.src = avatarUri(seed);
-  const body = document.createElement("div");
-  const name = document.createElement("b"); name.textContent = nameFor(seed);
+  const img = new Image(40, 40); img.alt = ""; img.src = avatarUri(seed);
+  const box = document.createElement("div");
+  const who = document.createElement("div"); who.className = "who";
+  const b = document.createElement("b"); b.textContent = p.username || nameFor(seed);
+  const t = document.createElement("time"); t.textContent = ago(p.created_at, serverNow);
+  who.append(b, t);
   const text = document.createElement("p"); text.textContent = p.body;
-  const mt = document.createElement("span"); mt.className = "mt";
-  mt.innerHTML = '<svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path d="M12 20.5s-7.5-4.4-9.4-9C1.4 8.4 3.2 5 6.4 5c2 0 3.5 1 4.4 2.5h2.4C14.1 6 15.6 5 17.6 5c3.2 0 5 3.4 3.8 6.5-1.9 4.6-9.4 9-9.4 9z" fill="currentColor"/></svg>';
-  mt.append(` ${p.metoo || 0}`);
-  body.append(name, text, mt);
-  li.append(img, body);
+  // Same action row as the feed, decorative here (pointer-events off).
+  const acts = document.createElement("div"); acts.className = "pills"; acts.setAttribute("aria-hidden", "true");
+  for (const [icon, n] of [["heart", p.metoo], ["bubble", p.replies], ["share", 0]]) {
+    const el = document.createElement("span"); el.className = "pill";
+    el.innerHTML = ICON[icon] + '<span class="n"></span>';
+    el.querySelector(".n").textContent = n || "";
+    acts.append(el);
+  }
+  box.append(who, text, acts);
+  li.append(img, box);
   return li;
 }
-
-let skew = 0, resetAt = null;
-const pad = (n) => String(n).padStart(2, "0");
-function tick() {
-  if (!resetAt) return;
-  let left = Math.max(0, resetAt - (Date.now() + skew));
-  if (left === 0) { load(); }
-  $("c-h").textContent = pad(Math.floor(left / 3600000));
-  $("c-m").textContent = pad(Math.floor(left / 60000) % 60);
-  $("c-s").textContent = pad(Math.floor(left / 1000) % 60);
-}
-setInterval(tick, 1000);
 
 let lastKey = "";
 async function load() {
   try {
-    const { posts, now, resetAt: r } = await (await fetch("/api/top")).json();
-    skew = now - Date.now(); resetAt = r; tick();
-    const key = posts.map((p) => `${p.id}:${p.metoo}`).join();
+    const { posts, now } = await (await fetch("/api/top")).json();
+    const key = posts.map((p) => `${p.id}:${p.metoo}:${p.replies}`).join();
     if (key === lastKey) return; // don't restart the drift when nothing changed
     lastKey = key;
     const ul = $("cards");
     if (!posts.length) { ul.style.animation = "none"; ul.innerHTML = '<li class="cards-empty">Nobody yet tonight. Be the first.</li>'; return; }
     // Repeat the set until one half is tall enough to fill the lane, then double it for a seamless loop.
     const half = [];
-    while (half.length < 6) half.push(...posts);
+    while (half.length < 8) half.push(...posts);
     ul.style.animation = "";
     ul.style.setProperty("--dur", `${half.length * 7}s`);
-    ul.replaceChildren(...half.map(card), ...half.map(card));
+    ul.replaceChildren(...half.map((p) => card(p, now)), ...half.map((p) => card(p, now)));
   } catch {}
 }
 load();

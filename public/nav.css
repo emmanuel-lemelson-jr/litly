@@ -1,0 +1,19 @@
+/* nav: thin, translucent, like Apple's global nav */
+nav {
+  position: sticky; top: 0; z-index: 10; height: 56px;
+  background: rgba(0,0,0,.78); backdrop-filter: saturate(180%) blur(20px); -webkit-backdrop-filter: saturate(180%) blur(20px);
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+nav .in { max-width: 980px; height: 100%; margin: 0 auto; padding: 0 22px; display: flex; align-items: center; justify-content: space-between; font-size: 13px; letter-spacing: -.01em; }
+.nav-logo { display: inline-flex; align-items: center; text-decoration: none; }
+.nav-logo img { height: 40px; width: auto; display: block; transition: opacity .2s; }
+.nav-logo:hover img { opacity: 0.85; }
+[hidden] { display: none !important; }
+.nav-auth { display: flex; align-items: center; }
+.nav-btn { background: var(--accent); color: var(--accent-ink); font: 500 14px var(--font); letter-spacing: -.01em; padding: 7px 16px; border-radius: 980px; text-decoration: none; transition: background-color .2s; }
+.nav-btn:hover { background: var(--accent-hover); }
+.nav-btn:focus-visible, .nav-me:focus-visible { outline: 2px solid var(--link); outline-offset: 3px; }
+.nav-me { display: inline-flex; align-items: center; gap: 9px; color: var(--text); text-decoration: none; font-size: 14px; padding: 4px 4px 4px 12px; border-radius: 980px; transition: background-color .2s; }
+.nav-me:hover { background: #1c1c1e; }
+.nav-me img { width: 30px; height: 30px; border-radius: 50%; display: block; }
+
