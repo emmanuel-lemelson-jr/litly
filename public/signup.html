@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Join Litly</title>
-  <meta name="description" content="Can't sleep? You're not alone. Join the twitter for night owls. Choose to stay anonymous.">
+  <meta name="description" content="Can't sleep? You're not alone. Join everyone who's up late. Choose to stay anonymous.">
   <link rel="canonical" href="https://litly.com/signup">
   <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=2">
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png?v=2">
@@ -77,7 +77,7 @@
     .card img { width: 38px; height: 38px; border-radius: 50%; }
     .card b { font-size: 14px; font-weight: 600; }
     .card p { margin: 2px 0 0; font-size: 16px; line-height: 1.38; overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
-    .card .mt { display: inline-block; margin-top: 8px; font-size: 13px; color: var(--link); font-variant-numeric: tabular-nums; }
+    .card .mt { display: inline-flex; align-items: center; gap: 2px; margin-top: 8px; font-size: 13px; color: var(--link); font-variant-numeric: tabular-nums; }
     .cards-empty { color: var(--muted); text-align: center; padding: 20px 0; }
 
     @media (max-width: 860px) {
@@ -97,8 +97,8 @@
   <section class="left">
     <a href="/" class="logo" aria-label="Litly home"><img src="/logo.svg" alt="Litly" width="130" height="40"></a>
     <div class="form">
-      <h1>Awake?<br><span>So are they.</span></h1>
-      <p class="lede">Join the twitter for night owls. Choose to stay anonymous.</p>
+      <h1>Twitter for<br><span>night owls</span></h1>
+      <p class="lede">Join everyone who's up late. Choose to stay anonymous.</p>
       <div class="sso">
         <button type="button" data-provider="google">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#4285F4" d="M23.5 12.27c0-.85-.08-1.67-.22-2.45H12v4.64h6.45a5.5 5.5 0 0 1-2.39 3.62v3h3.87c2.27-2.09 3.57-5.17 3.57-8.81z"/><path fill="#34A853" d="M12 24c3.24 0 5.95-1.07 7.93-2.91l-3.87-3c-1.07.72-2.45 1.15-4.06 1.15-3.12 0-5.77-2.11-6.71-4.94H1.29v3.1A12 12 0 0 0 12 24z"/><path fill="#FBBC05" d="M5.29 14.3a7.2 7.2 0 0 1 0-4.6v-3.1H1.29a12 12 0 0 0 0 10.8l4-3.1z"/><path fill="#EA4335" d="M12 4.76c1.76 0 3.34.61 4.59 1.8l3.43-3.43C17.95 1.19 15.24 0 12 0A12 12 0 0 0 1.29 6.6l4 3.1C6.23 6.87 8.88 4.76 12 4.76z"/></svg>
@@ -142,7 +142,8 @@ function card(p) {
   const name = document.createElement("b"); name.textContent = nameFor(seed);
   const text = document.createElement("p"); text.textContent = p.body;
   const mt = document.createElement("span"); mt.className = "mt";
-  mt.textContent = p.metoo ? `Me too · ${p.metoo}` : "Me too";
+  mt.innerHTML = '<svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path d="M12 20.5s-7.5-4.4-9.4-9C1.4 8.4 3.2 5 6.4 5c2 0 3.5 1 4.4 2.5h2.4C14.1 6 15.6 5 17.6 5c3.2 0 5 3.4 3.8 6.5-1.9 4.6-9.4 9-9.4 9z" fill="currentColor"/></svg>';
+  mt.append(` ${p.metoo || 0}`);
   body.append(name, text, mt);
   li.append(img, body);
   return li;

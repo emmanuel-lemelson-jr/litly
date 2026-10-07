@@ -66,7 +66,14 @@
     .nav-logo { display: inline-flex; align-items: center; text-decoration: none; }
     .nav-logo img { height: 40px; width: auto; display: block; transition: opacity .2s; }
     .nav-logo:hover img { opacity: 0.85; }
-    nav span { color: var(--muted); font-variant-numeric: tabular-nums; }
+    [hidden] { display: none !important; }
+    .nav-auth { display: flex; align-items: center; }
+    .nav-btn { background: var(--accent); color: var(--accent-ink); font: 500 14px var(--font); letter-spacing: -.01em; padding: 7px 16px; border-radius: 980px; text-decoration: none; transition: background-color .2s; }
+    .nav-btn:hover { background: var(--accent-hover); }
+    .nav-btn:focus-visible, .nav-me:focus-visible { outline: 2px solid var(--link); outline-offset: 3px; }
+    .nav-me { display: inline-flex; align-items: center; gap: 9px; color: var(--text); text-decoration: none; font-size: 14px; padding: 4px 4px 4px 12px; border-radius: 980px; transition: background-color .2s; }
+    .nav-me:hover { background: #1c1c1e; }
+    .nav-me img { width: 30px; height: 30px; border-radius: 50%; display: block; }
 
     /* hero */
     .hero { text-align: center; padding: 36px 22px 0; }
@@ -146,6 +153,11 @@
     .act:hover { background: #1c1c1e; color: var(--text); }
     .act:focus-visible { outline: 2px solid var(--link); outline-offset: 1px; }
     .act.on { color: var(--link); font-weight: 600; }
+    .act { display: inline-flex; align-items: center; gap: 6px; }
+    .act svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+    .act.on svg { fill: currentColor; }
+    .act .n:empty { display: none; }
+    .reply-box { margin: 10px 0 0; }
     .thread { margin: 6px 0 0; padding-left: 14px; border-left: 2px solid var(--hair); display: grid; gap: 14px; }
     .reply { display: grid; grid-template-columns: 26px 1fr; gap: 10px; }
     .reply img { width: 26px; height: 26px; border-radius: 50%; }
@@ -169,7 +181,7 @@
   </style>
 </head>
 <body>
-<nav><div class="in"><a href="/" class="nav-logo" aria-label="Litly"><img src="/logo.svg" alt="Litly" width="130" height="40"></a><span id="nav-clock"></span></div></nav>
+<nav><div class="in"><a href="/" class="nav-logo" aria-label="Litly"><img src="/logo.svg" alt="Litly" width="130" height="40"></a><div class="nav-auth" id="nav-auth"><a class="nav-btn" href="/signup">Log in</a></div></div></nav>
 
 <main>
   <section class="hero">
@@ -232,6 +244,16 @@ $("shuffle").addEventListener("click", () => {
   shuffleN++; localStorage.setItem("shuffle", shuffleN); computeSeed();
 });
 
+// Header: "Log in" for visitors, avatar + username once signed in.
+fetch("/api/profile").then((r) => (r.ok ? r.json() : null)).then((me) => {
+  if (!me) return;
+  const a = document.createElement("a"); a.className = "nav-me"; a.href = "/account"; a.setAttribute("aria-label", "Your account");
+  const u = document.createElement("span"); u.textContent = me.username;
+  const img = new Image(30, 30); img.alt = ""; img.src = avatarUri(me.avatar);
+  a.append(u, img);
+  $("nav-auth").replaceChildren(a);
+}).catch(() => {});
+
 let skew = 0, resetAt = null, seen = new Set(), first = true;
 const openThreads = new Set();
 const now = () => Date.now() + skew;
@@ -243,7 +265,6 @@ function tick() {
   if (left <= 0) { left = 0; load(); }
   const h = Math.floor(left / 3600000), m = Math.floor(left / 60000) % 60, s = Math.floor(left / 1000) % 60;
   $("clock").textContent = `${pad(h)}:${pad(m)}:${pad(s)}`;
-  $("nav-clock").textContent = `Resets in ${h}h ${pad(m)}m`;
 }
 setInterval(tick, 1000);
 
@@ -265,10 +286,13 @@ function render(p) {
   const t = document.createElement("time"); t.dateTime = new Date(p.created_at).toISOString(); t.textContent = ago(p.created_at);
   who.append(b, t);
   const text = document.createElement("p"); text.textContent = p.body; // never innerHTML user input
-  // actions: me too + replies
+  // actions: heart + reply. Replies show under the post; the reply box only appears after pressing Reply.
+  const HEART = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.5s-7.5-4.4-9.4-9C1.4 8.4 3.2 5 6.4 5c2 0 3.5 1 4.4 2.5h2.4C14.1 6 15.6 5 17.6 5c3.2 0 5 3.4 3.8 6.5-1.9 4.6-9.4 9-9.4 9z"/></svg>';
+  const BUBBLE = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 0 1-8.9 8.3 9.2 9.2 0 0 1-3.4-.7L3.5 20.5l1.6-4.4A8.2 8.2 0 0 1 3.5 11.5C3.5 6.8 7.3 3 12 3s9 3.8 9 8.5z"/></svg>';
   const acts = document.createElement("div"); acts.className = "actions";
   const mt = document.createElement("button"); mt.type = "button"; mt.className = "act" + (p.mine ? " on" : "");
-  const setMt = (count, mine) => { mt.classList.toggle("on", mine); mt.setAttribute("aria-pressed", mine); mt.textContent = count ? `Me too · ${count}` : "Me too"; mt.dataset.count = count; mt.dataset.mine = mine ? "1" : ""; };
+  mt.innerHTML = HEART + '<span class="n"></span>'; // static markup only, never user input
+  const setMt = (count, mine) => { mt.classList.toggle("on", mine); mt.setAttribute("aria-pressed", mine); mt.setAttribute("aria-label", mine ? `Unheart, ${count} hearts` : `Heart, ${count} hearts`); mt.querySelector(".n").textContent = count || ""; mt.dataset.count = count; mt.dataset.mine = mine ? "1" : ""; };
   setMt(p.metoo || 0, p.mine);
   mt.addEventListener("click", async () => {
     const was = !!mt.dataset.mine, c = Number(mt.dataset.count);
@@ -282,10 +306,12 @@ function render(p) {
   });
   const n = p.replies.length;
   const rb = document.createElement("button"); rb.type = "button"; rb.className = "act";
-  rb.textContent = n ? `${n} ${n === 1 ? "reply" : "replies"}` : "Reply";
+  rb.innerHTML = BUBBLE + '<span class="n"></span>';
+  rb.querySelector(".n").textContent = n || "";
+  rb.setAttribute("aria-label", n ? `Reply, ${n} ${n === 1 ? "reply" : "replies"}` : "Reply");
   acts.append(mt, rb);
 
-  const thread = document.createElement("div"); thread.className = "thread"; thread.hidden = !openThreads.has(p.id);
+  const thread = document.createElement("div"); thread.className = "thread"; thread.hidden = !p.replies.length;
   for (const r of p.replies) {
     const rs = seedOf(r), row = document.createElement("div"); row.className = "reply";
     const ri = new Image(26, 26); ri.alt = ""; ri.src = avatarUri(rs);
@@ -297,6 +323,7 @@ function render(p) {
     const rp = document.createElement("p"); rp.textContent = r.body;
     rbx.append(rw, rp); row.append(ri, rbx); thread.append(row);
   }
+  const rbox = document.createElement("div"); rbox.className = "reply-box"; rbox.hidden = !openThreads.has(p.id);
   const form = document.createElement("form"); form.className = "reply-form";
   const inp = document.createElement("input"); inp.maxLength = 280; inp.placeholder = "Reply anonymously"; inp.setAttribute("aria-label", "Reply");
   const hp = document.createElement("input"); hp.name = "website"; hp.tabIndex = -1; hp.autocomplete = "off"; hp.className = "hp"; hp.setAttribute("aria-hidden", "true");
@@ -313,13 +340,13 @@ function render(p) {
       inp.value = ""; await load(true);
     } catch (err) { rm.textContent = err.message; sb.disabled = false; }
   });
-  thread.append(form, rm);
+  rbox.append(form, rm);
   rb.addEventListener("click", () => {
-    thread.hidden = !thread.hidden;
-    thread.hidden ? openThreads.delete(p.id) : openThreads.add(p.id);
-    if (!thread.hidden) inp.focus();
+    rbox.hidden = !rbox.hidden;
+    rbox.hidden ? openThreads.delete(p.id) : openThreads.add(p.id);
+    if (!rbox.hidden) inp.focus();
   });
-  box.append(who, text, acts, thread);
+  box.append(who, text, acts, thread, rbox);
   li.append(img, box);
   return li;
 }

@@ -114,6 +114,63 @@ async function topPosts(env) {
   return res;
 }
 
+// ---- Account profile (random username + avatar, editable) ----
+const U_ADJ = ["restless", "wired", "sleepless", "quiet", "wandering", "drifting", "midnight", "hazy", "lingering", "dozy"];
+const U_NOUN = ["owl", "moth", "fox", "comet", "moon", "firefly", "cat", "star", "raccoon", "lantern"];
+const RESERVED_NAMES = /^(admin|administrator|litly|moderator|mod|support|staff|official|help|root|system)$/;
+const pick = (a) => a[crypto.getRandomValues(new Uint32Array(1))[0] % a.length];
+const randomSeed = () => [...crypto.getRandomValues(new Uint8Array(6))].map((b) => b.toString(16).padStart(2, "0")).join("");
+const randomUsername = () => `${pick(U_ADJ)}_${pick(U_NOUN)}_${crypto.getRandomValues(new Uint32Array(1))[0] % 1000}`;
+
+async function sessionUser(request, env, origin) {
+  if (!env.BETTER_AUTH_SECRET) return null;
+  const auth = await createAuth(env, origin);
+  const session = await auth.api.getSession({ headers: request.headers });
+  return session ? session.user : null;
+}
+
+async function getOrCreateProfile(env, user) {
+  const find = () => env.DB.prepare("SELECT username, avatar FROM profiles WHERE user_id = ?").bind(user.id).first();
+  const existing = await find();
+  if (existing) return existing;
+  for (let i = 0; i < 8; i++) {
+    const username = randomUsername(), avatar = randomSeed();
+    try {
+      await env.DB.prepare("INSERT INTO profiles (user_id, username, avatar, created_at) VALUES (?, ?, ?, ?)")
+        .bind(user.id, username, avatar, Date.now())
+        .run();
+      return { username, avatar };
+    } catch {
+      const again = await find(); // lost a race, or the username was taken: retry
+      if (again) return again;
+    }
+  }
+  throw new Error("Could not create profile");
+}
+
+async function profile(request, env, url) {
+  const user = await sessionUser(request, env, url.origin);
+  if (!user) return json({ error: "Not signed in" }, 401);
+  let p = await getOrCreateProfile(env, user);
+
+  if (request.method === "POST") {
+    const payload = await readBody(request);
+    if (!payload) return json({ error: "Bad request" }, 400);
+    const username = payload.username === undefined ? p.username : String(payload.username).trim().toLowerCase();
+    const avatar = payload.avatar === undefined ? p.avatar : String(payload.avatar);
+    if (!/^[a-z0-9_]{3,20}$/.test(username)) return json({ error: "Usernames are 3-20 letters, numbers or underscores." }, 400);
+    if (RESERVED_NAMES.test(username)) return json({ error: "That username isn't available." }, 400);
+    if (!/^[0-9a-f]{12}$/.test(avatar)) return json({ error: "Bad avatar." }, 400);
+    try {
+      await env.DB.prepare("UPDATE profiles SET username = ?, avatar = ? WHERE user_id = ?").bind(username, avatar, user.id).run();
+    } catch {
+      return json({ error: "That username is taken." }, 409);
+    }
+    p = { username, avatar };
+  }
+  return json({ name: user.name, username: p.username, avatar: p.avatar });
+}
+
 async function createPost(request, env) {
   const payload = await readBody(request);
   if (!payload) return json({ error: "Bad request" }, 400);
@@ -294,6 +351,7 @@ export default {
         return await auth.handler(request);
       }
       if (url.pathname === "/api/posts" && request.method === "GET") return await listPosts(request, env);
+      if (url.pathname === "/api/profile" && (request.method === "GET" || request.method === "POST")) return await profile(request, env, url);
       if (url.pathname === "/api/top" && request.method === "GET") return await topPosts(env);
       if (url.pathname === "/api/metoo" && request.method === "POST") return await toggleMeToo(request, env);
       if (url.pathname === "/api/replies" && request.method === "POST") return await createReply(request, env);

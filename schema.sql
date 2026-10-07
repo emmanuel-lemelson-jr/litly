@@ -92,3 +92,12 @@ CREATE TABLE IF NOT EXISTS "verification" (
   "updatedAt" DATE NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_verification_identifier ON "verification"("identifier");
+
+-- Public-facing account profile. Randomly assigned on first visit, editable by the user.
+CREATE TABLE IF NOT EXISTS profiles (
+  user_id TEXT NOT NULL PRIMARY KEY,
+  username TEXT NOT NULL,
+  avatar TEXT NOT NULL,
+  created_at INTEGER NOT NULL
+);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_profiles_username ON profiles(username);

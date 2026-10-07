@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Your account - Litly</title>
+  <meta name="robots" content="noindex">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=2">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png?v=2">
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png?v=2">
+  <meta name="color-scheme" content="dark">
+  <meta name="theme-color" content="#000000">
+  <style>
+    :root { --bg:#000; --tile:#161617; --text:#f5f5f7; --muted:#86868b; --hair:#2a2a2c; --accent:#869ad5; --accent-hover:#9bb0ed; --accent-ink:#060913; --link:#9bb0ed; --err:#ff453a;
+      --font:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text","Helvetica Neue",Helvetica,Arial,sans-serif; }
+    * { box-sizing: border-box; }
+    [hidden] { display: none !important; }
+    body { margin:0; background:var(--bg); color:var(--text); font:17px/1.47 var(--font); letter-spacing:-.022em; -webkit-font-smoothing:antialiased; }
+    nav { height:56px; border-bottom:1px solid rgba(255,255,255,.06); }
+    nav .in { max-width:980px; height:100%; margin:0 auto; padding:0 22px; display:flex; align-items:center; justify-content:space-between; font-size:14px; }
+    nav img { height:40px; width:auto; display:block; }
+    nav a.back { color:var(--muted); text-decoration:none; }
+    nav a.back:hover { color:var(--text); }
+    main { max-width:520px; margin:0 auto; padding:44px 22px 80px; }
+    h1 { font-size:clamp(32px,6vw,44px); line-height:1.1; letter-spacing:-.02em; margin:0 0 28px; }
+    .card { background:var(--tile); border-radius:20px; padding:24px; }
+    .top { display:flex; align-items:center; gap:18px; }
+    .top img { width:88px; height:88px; border-radius:50%; flex:none; }
+    .top .u { font-size:24px; font-weight:600; letter-spacing:-.015em; overflow-wrap:anywhere; }
+    .top .n { color:var(--muted); font-size:15px; }
+    .row { margin-top:26px; }
+    label, .lbl { display:block; font-size:13px; color:var(--muted); margin:0 0 8px; }
+    input[type=text] { width:100%; background:#1c1c1e; border:1px solid var(--hair); color:var(--text); border-radius:12px; padding:12px 14px; font:17px var(--font); letter-spacing:-.02em; outline:0; }
+    input[type=text]:focus-visible { border-color:var(--accent); }
+    .help { color:#6e6e73; font-size:13px; margin:6px 0 0; }
+    .readonly { background:#1c1c1e; border-radius:12px; padding:12px 14px; color:var(--text); overflow-wrap:anywhere; }
+    .picker { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; }
+    .picker button { border:2px solid transparent; background:#1c1c1e; border-radius:50%; padding:0; aspect-ratio:1; cursor:pointer; overflow:hidden; transition:border-color .15s, transform .1s; }
+    .picker button:hover { transform:scale(1.04); }
+    .picker button[aria-pressed=true] { border-color:var(--accent); }
+    .picker button:focus-visible { outline:2px solid var(--link); outline-offset:2px; }
+    .picker img { width:100%; height:100%; display:block; }
+    .link { background:none; border:0; color:var(--link); font:15px var(--font); padding:10px 0 0; cursor:pointer; }
+    .link:hover { text-decoration:underline; }
+    .actions { display:flex; align-items:center; gap:14px; margin-top:28px; }
+    .btn { border:0; cursor:pointer; background:var(--accent); color:var(--accent-ink); font:500 17px var(--font); letter-spacing:-.02em; padding:11px 26px; border-radius:980px; transition:background-color .2s; }
+    .btn:hover:not(:disabled) { background:var(--accent-hover); }
+    .btn:disabled { background:#2c2c2e; color:#6e6e73; cursor:default; }
+    .btn.ghost { background:#2c2c2e; color:var(--text); }
+    .btn.ghost:hover { background:#3a3a3c !important; }
+    .msg { font-size:14px; color:var(--muted); min-height:20px; }
+    .msg.err { color:var(--err); }
+    .signout { margin-top:20px; }
+    @media (prefers-reduced-motion: reduce) { * { transition:none !important; } }
+  </style>
+</head>
+<body>
+<nav><div class="in"><a href="/" aria-label="Litly home"><img src="/logo.svg" alt="Litly" width="130" height="40"></a><a class="back" href="/">Back to feed</a></div></nav>
+
+<main>
+  <h1>Your account</h1>
+  <section class="card" id="card" hidden>
+    <div class="top">
+      <img id="big" alt="" width="88" height="88">
+      <div><div class="u" id="show-user"></div><div class="n">Only you can see your name</div></div>
+    </div>
+
+    <div class="row">
+      <div class="lbl">Profile picture</div>
+      <div class="picker" id="picker" role="group" aria-label="Choose a profile picture"></div>
+      <button type="button" class="link" id="more">Show me more</button>
+    </div>
+
+    <div class="row">
+      <label for="username">Username</label>
+      <input type="text" id="username" maxlength="20" autocomplete="off" autocapitalize="none" spellcheck="false">
+      <p class="help">3-20 letters, numbers or underscores.</p>
+    </div>
+
+    <div class="row">
+      <div class="lbl">Name</div>
+      <div class="readonly" id="name"></div>
+      <p class="help">From your Google or Apple account. It's never shown on posts.</p>
+    </div>
+
+    <div class="actions">
+      <button class="btn" id="save" type="button" disabled>Save</button>
+      <span class="msg" id="msg" role="status"></span>
+    </div>
+  </section>
+  <button class="btn ghost signout" id="signout" type="button" hidden>Sign out</button>
+</main>
+
+<script src="/avatars.js"></script>
+<script>
+const $ = (id) => document.getElementById(id);
+const rand = () => [...crypto.getRandomValues(new Uint8Array(6))].map((b) => b.toString(16).padStart(2, "0")).join("");
+let saved = null, avatar = null;
+
+function dirty() {
+  $("save").disabled = !saved || ($("username").value.trim().toLowerCase() === saved.username && avatar === saved.avatar);
+}
+function setAvatar(seed) {
+  avatar = seed;
+  $("big").src = avatarUri(seed);
+  for (const b of $("picker").children) b.setAttribute("aria-pressed", b.dataset.seed === seed);
+  dirty();
+}
+function fillPicker(keep) {
+  const seeds = [keep, ...Array.from({ length: 7 }, rand)];
+  $("picker").replaceChildren(...seeds.map((seed, i) => {
+    const b = document.createElement("button"); b.type = "button"; b.dataset.seed = seed;
+    b.setAttribute("aria-label", `Avatar option ${i + 1}`); b.setAttribute("aria-pressed", seed === avatar);
+    const img = new Image(); img.alt = ""; img.src = avatarUri(seed); b.append(img);
+    b.addEventListener("click", () => setAvatar(seed));
+    return b;
+  }));
+}
+function show(p) {
+  saved = { username: p.username, avatar: p.avatar };
+  $("show-user").textContent = p.username;
+  $("username").value = p.username;
+  $("name").textContent = p.name || "";
+  avatar = p.avatar; $("big").src = avatarUri(p.avatar);
+  fillPicker(p.avatar);
+  dirty();
+}
+
+fetch("/api/profile").then((r) => {
+  if (r.status === 401) { location.replace("/signup"); return null; }
+  return r.json();
+}).then((p) => {
+  if (!p) return;
+  show(p);
+  $("card").hidden = false; $("signout").hidden = false;
+}).catch(() => { $("msg").textContent = "Couldn't load your account."; });
+
+$("more").addEventListener("click", () => fillPicker(avatar));
+$("username").addEventListener("input", () => { $("msg").textContent = ""; $("msg").className = "msg"; dirty(); });
+
+$("save").addEventListener("click", async () => {
+  const msg = $("msg"); msg.className = "msg"; msg.textContent = ""; $("save").disabled = true;
+  try {
+    const res = await fetch("/api/profile", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ username: $("username").value, avatar }) });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Couldn't save.");
+    show(data); msg.textContent = "Saved.";
+  } catch (e) { msg.className = "msg err"; msg.textContent = e.message; dirty(); }
+});
+
+$("signout").addEventListener("click", async () => {
+  try { await fetch("/api/auth/sign-out", { method: "POST", headers: { "content-type": "application/json" }, body: "{}" }); } catch {}
+  location.href = "/";
+});
+</script>
+</body>
+</html>
