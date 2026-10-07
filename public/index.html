@@ -183,7 +183,7 @@
   <section class="composer">
     <form id="post-form" class="box">
       <label for="body" class="hp">Your post</label>
-      <textarea id="body" name="body" rows="1" maxlength="500" placeholder="Up late because…" required></textarea>
+      <textarea id="body" name="body" rows="1" maxlength="500" placeholder="" required></textarea>
       <div class="hp" aria-hidden="true"><input name="website" tabindex="-1" autocomplete="off"></div>
       <div class="bar">
         <div class="me"><img id="me-avatar" alt="" width="28" height="28"><span id="me-name"></span><button type="button" class="shuffle" id="shuffle" aria-label="Shuffle avatar" title="Shuffle avatar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 3h5v5"/><path d="M4 20 21 3"/><path d="M21 16v5h-5"/><path d="M15 15l6 6"/><path d="M4 4l5 5"/></svg></button></div>
@@ -365,6 +365,12 @@ const PHRASES = [
   "I can't shut off…"
 ];
 
+const prefersReducedMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+if (prefersReducedMotion) {
+  body.placeholder = "Up late because…";
+}
+
+let isInitial = true;
 let phraseIdx = 0;
 let charIdx = 0;
 let isDeleting = false;
@@ -375,6 +381,21 @@ function stepTyping() {
   if (isPaused || body.value.length > 0) return;
   if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
     body.placeholder = "Up late because…";
+    return;
+  }
+
+  if (isInitial) {
+    const initialText = PREFIX + PHRASES[0];
+    charIdx++;
+    body.placeholder = initialText.slice(0, charIdx);
+    if (charIdx >= initialText.length) {
+      isInitial = false;
+      isDeleting = true;
+      charIdx = PHRASES[0].length;
+      typeTimer = setTimeout(stepTyping, 2400);
+      return;
+    }
+    typeTimer = setTimeout(stepTyping, 40 + Math.random() * 25);
     return;
   }
 
@@ -428,8 +449,12 @@ body.addEventListener("input", () => {
   $("count").textContent = body.value.length > 400 ? 500 - body.value.length : "";
   $("post-btn").disabled = n < 3;
   if (body.value.length === 0) {
+    body.placeholder = PREFIX;
+    charIdx = 0;
+    isDeleting = false;
     typeTimer = setTimeout(startTyping, 800);
   } else {
+    isInitial = false;
     stopTyping();
   }
 });
@@ -447,6 +472,10 @@ $("post-form").addEventListener("submit", async (e) => {
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || "Couldn't post.");
     e.target.reset(); $("count").textContent = ""; adjustHeight();
+    isInitial = false;
+    charIdx = 0;
+    isDeleting = false;
+    body.placeholder = PREFIX;
     typeTimer = setTimeout(startTyping, 1200);
     msg.textContent = "Posted. You're not the only one.";
     await load();
@@ -457,7 +486,9 @@ $("post-form").addEventListener("submit", async (e) => {
 });
 
 adjustHeight();
-typeTimer = setTimeout(startTyping, 1200);
+if (!prefersReducedMotion) {
+  typeTimer = setTimeout(startTyping, 200);
+}
 
 load();
 setInterval(load, 20000);
