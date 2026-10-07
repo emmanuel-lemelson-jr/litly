@@ -153,16 +153,33 @@ function draw() {
   $("content").replaceChildren(frag);
 }
 
+// Smooth loads: show the last copy of this profile right away (kept for the tab's session, so Back and
+// revisits are instant) and refresh it in the background. First visit: the header paints at once from
+// what we know (your own cached profile, or just the name) while the posts load. The signed-in check
+// runs in parallel with the profile request instead of after it.
+const KEY = "litly_u:" + name.toLowerCase();
+function load(raw) { data = raw; document.title = `${data.user.username} · Litly`; draw(); }
+function placeholder() {
+  const mine = (() => { try { const m = JSON.parse(localStorage.getItem("litly_me") || "null"); return m && m.username === name.toLowerCase() ? m : null; } catch { return null; } })();
+  const head = document.createElement("div"); head.className = "head";
+  const img = new Image(84, 84); img.alt = ""; if (mine) img.src = avatarUri(mine.avatar); else img.style.background = "#161617";
+  const who = document.createElement("div"), h1 = document.createElement("h1"), j = document.createElement("p");
+  h1.textContent = mine ? mine.username : name; j.innerHTML = "&nbsp;"; who.append(h1, j); head.append(img, who);
+  $("content").replaceChildren(head);
+}
 (async () => {
+  let shown = false;
+  try { const c = JSON.parse(sessionStorage.getItem(KEY) || "null"); if (c) { me = null; load(c); shown = true; } } catch {}
+  if (!shown) placeholder();
   try {
-    const res = await fetch(`/api/user?name=${encodeURIComponent(name)}`);
-    if (res.status === 404) return notFound();
+    const [res, who] = await Promise.all([fetch(`/api/user?name=${encodeURIComponent(name)}`), litlyMe]);
+    me = who || null;
+    if (res.status === 404) { try { sessionStorage.removeItem(KEY); } catch {} return notFound(); }
     if (!res.ok) throw new Error();
-    data = await res.json();
-    me = (await litlyMe) || null;
-    document.title = `${data.user.username} · Litly`;
-    draw();
-  } catch { $("content").innerHTML = '<div class="state"><p>Couldn\'t load this. Try again in a moment.</p></div>'; }
+    const fresh = await res.json();
+    try { sessionStorage.setItem(KEY, JSON.stringify(fresh)); } catch {}
+    load(fresh);
+  } catch { if (!shown) $("content").innerHTML = '<div class="state"><p>Couldn\'t load this. Try again in a moment.</p></div>'; }
 })();
 </script>
 </body>

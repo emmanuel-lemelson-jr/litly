@@ -26,15 +26,19 @@ async function appleClientSecret(env) {
 }
 
 // Built per request because Workers bindings and secrets only exist on `env`.
-export async function createAuth(env, origin) {
+// Session checks (every profile/account load) don't need the sign-in providers, so they skip signing
+// Apple's client secret and reuse one instance per isolate instead of rebuilding Better Auth each request.
+const sessionAuths = new Map();
+export async function createAuth(env, origin, sessionOnly = false) {
+  if (sessionOnly && sessionAuths.has(origin)) return sessionAuths.get(origin);
   const socialProviders = {};
-  if (env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET) {
+  if (!sessionOnly && env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET) {
     socialProviders.google = { clientId: env.GOOGLE_CLIENT_ID, clientSecret: env.GOOGLE_CLIENT_SECRET };
   }
-  if (env.APPLE_CLIENT_ID && env.APPLE_TEAM_ID && env.APPLE_KEY_ID && env.APPLE_PRIVATE_KEY) {
+  if (!sessionOnly && env.APPLE_CLIENT_ID && env.APPLE_TEAM_ID && env.APPLE_KEY_ID && env.APPLE_PRIVATE_KEY) {
     socialProviders.apple = { clientId: env.APPLE_CLIENT_ID, clientSecret: await appleClientSecret(env) };
   }
-  return betterAuth({
+  const auth = betterAuth({
     appName: "Litly",
     baseURL: origin,
     secret: env.BETTER_AUTH_SECRET,
@@ -43,6 +47,9 @@ export async function createAuth(env, origin) {
     // Apple posts the sign-in result back from appleid.apple.com.
     trustedOrigins: ["https://appleid.apple.com"],
     // Stay signed in for 90 days of inactivity; each day of use pushes the expiry out again.
-    session: { expiresIn: 60 * 60 * 24 * 90, updateAge: 60 * 60 * 24 },
+    // The signed cookie cache lets most session checks skip the database (a sign-out or revoke can lag up to 5 minutes).
+    session: { expiresIn: 60 * 60 * 24 * 90, updateAge: 60 * 60 * 24, cookieCache: { enabled: true, maxAge: 5 * 60 } },
   });
+  if (sessionOnly) sessionAuths.set(origin, auth);
+  return auth;
 }

@@ -103,18 +103,23 @@ function show(p) {
   dirty();
 }
 
-fetch("/api/profile").then((r) => {
-  if (r.status === 401) { try { localStorage.removeItem("litly_me"); } catch {} location.replace("/signup"); return null; }
-  return r.json();
-}).then((p) => {
-  if (!p) return;
-  show(p);
-  $("card").hidden = false; $("signout").hidden = false;
-  $("view").href = "/u/" + p.username; $("viewp").hidden = false;
-}).catch(() => { $("msg").textContent = "Couldn't load your account."; });
+// Paint straight from the cached profile (same cache the header uses), then let the one shared
+// /api/profile request (started by nav.js) confirm it. No second request, no blank screen.
+let touched = false;
+const reveal = () => { $("card").hidden = false; $("signout").hidden = false; $("viewp").hidden = false; };
+let cached = null;
+try { cached = JSON.parse(localStorage.getItem("litly_me") || "null"); } catch {}
+if (cached && cached.username && cached.avatar) { show(cached); reveal(); }
+window.litlyMe.then((p) => {
+  if (p === undefined) { if (!cached) $("msg").textContent = "Couldn't load your account."; return; }
+  if (!p) { try { localStorage.removeItem("litly_me"); } catch {} location.replace("/signup"); return; }
+  if (!touched || !saved) show(p); else saved = { username: p.username, avatar: p.avatar };
+  dirty();
+  reveal();
+});
 
-$("shuffle").addEventListener("click", () => { $("msg").textContent = ""; setAvatar(rand()); });
-$("username").addEventListener("input", () => { $("msg").textContent = ""; $("msg").className = "msg"; dirty(); });
+$("shuffle").addEventListener("click", () => { touched = true; $("msg").textContent = ""; setAvatar(rand()); });
+$("username").addEventListener("input", () => { touched = true; $("msg").textContent = ""; $("msg").className = "msg"; dirty(); });
 
 $("save").addEventListener("click", async () => {
   const msg = $("msg"); msg.className = "msg"; msg.textContent = ""; $("save").disabled = true;

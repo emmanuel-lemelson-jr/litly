@@ -125,25 +125,27 @@ async function getPost(request, env, url) {
 // A person's public profile: who they are plus every post and reply they've made.
 async function getUser(request, env, url) {
   const name = String(url.searchParams.get("name") || "").toLowerCase();
-  const prof = await env.DB.prepare("SELECT user_id, username, avatar, created_at FROM profiles WHERE username = ?").bind(name).first();
-  if (!prof) return json({ error: "No such person." }, 404);
   const ipHash = await hashIp(request, env);
-  const { results: posts } = await env.DB.prepare(
-    `SELECT ${POST_COLS}, ${heartedByMe}
-     ${POST_JOIN} WHERE p.user_id = ? AND p.hidden = 0 ORDER BY p.created_at DESC LIMIT 200`
-  )
-    .bind(ipHash, prof.user_id)
-    .all();
+  // One round trip: the profile, its posts and its replies are looked up together by username.
+  const who = "(SELECT user_id FROM profiles WHERE username = ?)";
+  const [profRes, postsRes, repliesRes] = await env.DB.batch([
+    env.DB.prepare("SELECT user_id, username, avatar, created_at FROM profiles WHERE username = ?").bind(name),
+    env.DB.prepare(
+      `SELECT ${POST_COLS}, ${heartedByMe}
+       ${POST_JOIN} WHERE p.user_id = ${who} AND p.hidden = 0 ORDER BY p.created_at DESC LIMIT 200`
+    ).bind(ipHash, name),
+    env.DB.prepare(
+      `SELECT r.id, r.post_id, r.body, r.created_at, SUBSTR(p.body, 1, 100) AS post_body,
+         (SELECT COUNT(*) FROM reply_metoos m WHERE m.reply_id = r.id) AS metoo,
+         EXISTS(SELECT 1 FROM reply_metoos m WHERE m.reply_id = r.id AND m.ip_hash = ?) AS mine
+       FROM replies r JOIN posts p ON p.id = r.post_id
+       WHERE r.user_id = ${who} AND r.deleted = 0 AND p.hidden = 0 ORDER BY r.created_at DESC LIMIT 200`
+    ).bind(ipHash, name),
+  ]);
+  const prof = profRes.results[0];
+  if (!prof) return json({ error: "No such person." }, 404);
+  const posts = postsRes.results, replies = repliesRes.results;
   for (const p of posts) p.mine = !!p.mine;
-  const { results: replies } = await env.DB.prepare(
-    `SELECT r.id, r.post_id, r.body, r.created_at, SUBSTR(p.body, 1, 100) AS post_body,
-       (SELECT COUNT(*) FROM reply_metoos m WHERE m.reply_id = r.id) AS metoo,
-       EXISTS(SELECT 1 FROM reply_metoos m WHERE m.reply_id = r.id AND m.ip_hash = ?) AS mine
-     FROM replies r JOIN posts p ON p.id = r.post_id
-     WHERE r.user_id = ? AND r.deleted = 0 AND p.hidden = 0 ORDER BY r.created_at DESC LIMIT 200`
-  )
-    .bind(ipHash, prof.user_id)
-    .all();
   for (const r of replies) r.mine = !!r.mine;
   return json({ user: { username: prof.username, avatar: prof.avatar, joined: prof.created_at }, posts, replies });
 }
@@ -184,7 +186,7 @@ const randomUsername = (attempt) => {
 
 async function sessionUser(request, env, origin) {
   if (!env.BETTER_AUTH_SECRET) return null;
-  const auth = await createAuth(env, origin);
+  const auth = await createAuth(env, origin, true);
   const session = await auth.api.getSession({ headers: request.headers });
   return session ? session.user : null;
 }
