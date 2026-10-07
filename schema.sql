@@ -118,3 +118,30 @@ CREATE TABLE IF NOT EXISTS profiles (
   created_at INTEGER NOT NULL
 );
 CREATE UNIQUE INDEX IF NOT EXISTS idx_profiles_username ON profiles(username);
+
+-- Visitor tracking. Nothing here is identifying: the key is SHA-256(day + random browser id).
+-- One row per visitor per UTC day (dedupe + presence); last_seen drives the "awake" count.
+CREATE TABLE IF NOT EXISTS visitor_days (
+  hash TEXT PRIMARY KEY,
+  day TEXT NOT NULL,
+  country TEXT NOT NULL,
+  first_seen INTEGER NOT NULL,
+  last_seen INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_visitor_days_seen ON visitor_days(last_seen);
+-- Distinct visitors per day, and the all-time total (key 'total').
+CREATE TABLE IF NOT EXISTS visitor_stats (
+  key TEXT PRIMARY KEY,
+  value INTEGER NOT NULL DEFAULT 0
+);
+-- Visits per country (two-letter code, 'XX' = unknown).
+CREATE TABLE IF NOT EXISTS countries (
+  code TEXT PRIMARY KEY,
+  visits INTEGER NOT NULL DEFAULT 0
+);
+-- Rolling log of first sightings, newest first in the pop-up (trimmed to 200).
+CREATE TABLE IF NOT EXISTS recent_visits (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  country TEXT NOT NULL,
+  created_at INTEGER NOT NULL
+);

@@ -477,6 +477,63 @@ async function admin(request, env, path) {
   return json({ ok: true });
 }
 
+// ---- Visitors: country + "awake" presence --------------------------------------------------
+// Country comes free from Cloudflare's edge (request.cf.country), so there is no IP lookup.
+// The browser sends a random id that changes daily; we only ever store SHA-256(day + id).
+const AWAKE_MS = 15 * 60 * 1000; // someone is "awake" if they loaded or touched the page in the last 15 minutes
+const RECENT_KEEP = 200;
+const BOT_UA = /bot|crawl|spider|slurp|preview|headless|curl|wget|python|node-fetch|go-http/i;
+
+async function sha256Hex(text) {
+  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
+  return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+async function visitorSnapshot(env, now) {
+  const [awake, total, recent, places] = await env.DB.batch([
+    env.DB.prepare("SELECT COUNT(*) AS n FROM visitor_days WHERE last_seen > ?").bind(now - AWAKE_MS),
+    env.DB.prepare("SELECT value FROM visitor_stats WHERE key = 'total'"),
+    env.DB.prepare("SELECT id, country AS c, created_at AS t FROM recent_visits ORDER BY id DESC LIMIT ?").bind(RECENT_KEEP),
+    // Globe: every country ever seen (n = all-time visits) and how many are awake there right now (a).
+    env.DB.prepare(
+      `SELECT c.code AS c, c.visits AS n,
+         (SELECT COUNT(*) FROM visitor_days v WHERE v.country = c.code AND v.last_seen > ?) AS a
+       FROM countries c WHERE c.code != 'XX' ORDER BY c.visits DESC LIMIT 250`
+    ).bind(now - AWAKE_MS),
+  ]);
+  return { awake: awake.results[0].n, total: total.results[0]?.value || 0, recent: recent.results, places: places.results, now };
+}
+
+// Called on load, when the tab becomes visible again, and every so often while it stays visible.
+async function recordVisit(request, env) {
+  const body = await readBody(request);
+  const id = String(body?.id || "");
+  const now = Date.now();
+  if (/^[A-Za-z0-9-]{16,64}$/.test(id) && !BOT_UA.test(request.headers.get("user-agent") || "")) {
+    const day = new Date(now).toISOString().slice(0, 10);
+    const hash = await sha256Hex(day + id);
+    let country = String(request.cf?.country || "XX").toUpperCase();
+    if (!/^[A-Z]{2}$/.test(country) || country === "T1") country = "XX"; // T1 = Tor
+    const seen = await env.DB.prepare("UPDATE visitor_days SET last_seen = ? WHERE hash = ?").bind(now, hash).run();
+    if (!seen.meta.changes) {
+      // First sighting today. INSERT OR IGNORE keeps two simultaneous tabs from double counting.
+      const ins = await env.DB.prepare("INSERT OR IGNORE INTO visitor_days (hash, day, country, first_seen, last_seen) VALUES (?, ?, ?, ?, ?)")
+        .bind(hash, day, country, now, now).run();
+      if (ins.meta.changes) {
+        await env.DB.batch([
+          env.DB.prepare("INSERT INTO visitor_stats (key, value) VALUES (?, 1) ON CONFLICT(key) DO UPDATE SET value = value + 1").bind("day:" + day),
+          env.DB.prepare("INSERT INTO visitor_stats (key, value) VALUES ('total', 1) ON CONFLICT(key) DO UPDATE SET value = value + 1"),
+          env.DB.prepare("INSERT INTO countries (code, visits) VALUES (?, 1) ON CONFLICT(code) DO UPDATE SET visits = visits + 1").bind(country),
+          env.DB.prepare("INSERT INTO recent_visits (country, created_at) VALUES (?, ?)").bind(country, now),
+          env.DB.prepare("DELETE FROM recent_visits WHERE id <= (SELECT MAX(id) FROM recent_visits) - ?").bind(RECENT_KEEP),
+          env.DB.prepare("DELETE FROM visitor_days WHERE day < ?").bind(new Date(now - 2 * DAY_MS).toISOString().slice(0, 10)),
+        ]);
+      }
+    }
+  }
+  return json(await visitorSnapshot(env, now));
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
@@ -497,6 +554,8 @@ export default {
       if (url.pathname === "/api/post/delete" && request.method === "POST") return await deleteOwn(request, env, url, "post");
       if (url.pathname === "/api/reply/delete" && request.method === "POST") return await deleteOwn(request, env, url, "reply");
       if (url.pathname === "/api/profile" && (request.method === "GET" || request.method === "POST")) return await profile(request, env, url);
+      if (url.pathname === "/api/visit" && request.method === "POST") return await recordVisit(request, env);
+      if (url.pathname === "/api/visitors" && request.method === "GET") return json(await visitorSnapshot(env, Date.now()));
       if (url.pathname === "/api/top" && request.method === "GET") return await topPosts(env);
       if (url.pathname === "/api/metoo" && request.method === "POST") return await toggleMeToo(request, env);
       if (url.pathname === "/api/replies" && request.method === "POST") return await createReply(request, env, url);

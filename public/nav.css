@@ -17,3 +17,30 @@ nav .in { max-width: 980px; height: 100%; margin: 0 auto; padding: 0 22px; displ
 .nav-me:hover { background: #1c1c1e; }
 .nav-me img { width: 30px; height: 30px; border-radius: 50%; display: block; }
 
+
+/* visitors: thin bar under the header + pop-up */
+.vbar { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; height: 40px; padding: 0 22px; background: #0a0a0b; border: 0; border-bottom: 1px solid rgba(255,255,255,.06); color: var(--muted); font: 14px var(--font); letter-spacing: -.01em; cursor: pointer; opacity: 0; transition: opacity .25s, background-color .2s; }
+.vbar.ready { opacity: 1; }
+.vbar:hover { background: #111113; }
+.vbar:focus-visible { outline: 2px solid var(--link); outline-offset: -2px; }
+.vbar b { color: #7bc88a; font-weight: 600; }
+.vdot { width: 10px; height: 10px; border-radius: 50%; background: #4cd964; box-shadow: 0 0 8px rgba(76,217,100,.7); flex: none; }
+.vflags { display: inline-flex; margin-left: 4px; }
+.vflags img { width: 18px; height: 18px; border-radius: 50%; box-shadow: 0 0 0 1.5px #161617; }
+.vflags img + img { margin-left: -6px; }
+.vdlg { width: calc(100% - 32px); max-width: 440px; max-height: 80vh; padding: 0; background: #1c1c1e; color: var(--text); border: 1px solid #2e2e30; border-radius: 22px; box-shadow: 0 24px 80px rgba(0,0,0,.6); overflow: hidden; flex-direction: column; }
+.vdlg[open] { display: flex; }
+.vdlg::backdrop { background: rgba(0,0,0,.5); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
+.vhead { display: flex; align-items: center; gap: 12px; padding: 18px 20px; border-bottom: 1px solid #2e2e30; }
+.vhead h2 { flex: 1; margin: 0; font: 600 22px var(--font); letter-spacing: -.02em; }
+.vcount { color: var(--muted); font-weight: 400; }
+.vclose { width: 34px; height: 34px; border: 0; border-radius: 50%; background: #2c2c2e; color: var(--text); font: 22px/1 var(--font); cursor: pointer; }
+.vclose:hover { background: #3a3a3c; }
+.vlist { list-style: none; margin: 0; padding: 4px 0; overflow-y: auto; }
+.vlist li { display: flex; align-items: center; gap: 14px; padding: 8px 20px; }
+.vlist img { width: 36px; height: 36px; border-radius: 50%; flex: none; }
+.vname { flex: 1; min-width: 0; font-size: 17px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.vtime { color: var(--muted); font-size: 14px; font-variant-numeric: tabular-nums; }
+.vnew { animation: vin .4s ease-out; }
+@keyframes vin { from { opacity: 0; transform: translateY(-10px); } }
+@media (prefers-reduced-motion: reduce) { .vnew { animation: none; } }

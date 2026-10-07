@@ -44,6 +44,7 @@
 <h2>What we collect</h2>
 <ul>
   <li><b>Posts, replies, photos and hearts.</b> What you write and upload, when you did it, and the account it came from. Photos are resized in your browser, which also removes location data (EXIF), before they are uploaded and stored with our hosting provider.</li>
+  <li><b>Anonymous visit counts.</b> To show how many people are awake and which countries they're in, your browser sends a random ID that changes every day. We store only a one-way hash of that ID and the date, your country (from your connection, not your precise location) and when you were last here. We don't store the ID itself or your IP address for this.</li>
   <li><b>A scrambled version of your IP address.</b> We turn your IP address into a one-way hash using a secret key, and we don't store the raw address. We use the hash to limit spam, count one heart per person, and block abusers.</li>
   <li><b>If you sign in:</b> your name, email address and profile picture URL from Google or Apple, plus a session so you stay signed in. If you use "Hide My Email" on Apple, we only get Apple's relay address.</li>
   <li><b>Basic technical logs</b> kept by our hosting provider, such as request time, browser type and approximate location, used to keep the service secure and running.</li>
@@ -67,6 +68,7 @@
 <p>We use only what's needed to run Litly, with no advertising or tracking cookies:</p>
 <ul>
   <li><b>A random ID stored in your browser (local storage)</b> that generates your daily avatar. It's not linked to your identity.</li>
+  <li><b>A random daily visitor ID</b> in local storage, used only for the visit counts above.</li>
   <li><b>A sign-in cookie</b>, only if you sign in, to keep you signed in. Signing out removes it.</li>
   <li><b>A short-lived security cookie</b> while you sign in with Google or Apple.</li>
 </ul>

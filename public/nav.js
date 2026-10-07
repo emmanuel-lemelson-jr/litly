@@ -39,3 +39,6 @@ document.addEventListener("DOMContentLoaded", () => window.litlyMe.then((me) => 
   try { localStorage.setItem("litly_me", JSON.stringify(next)); } catch {}
   if (!cached || cached.username !== next.username || cached.avatar !== next.avatar || document.getElementById("nav-auth").style.visibility === "hidden") paintNav(next);
 }));
+
+// Live visitor bar under the header (visitors.js).
+(function () { var s = document.createElement("script"); s.src = "/visitors.js"; s.defer = true; document.head.append(s); })();

@@ -1,18 +1,10 @@
-// A light 2D-canvas "3D" globe for the home page: land drawn as dots, night side lit up, and pulses
-// where people are "posting from". The activity is a MOCK (random cities, weighted to where it is
-// currently night); nothing here comes from real posts yet. Needs /land.js (1-degree land mask).
+// A light 2D-canvas "3D" globe for the home page: land drawn as dots, night side lit up, and real
+// visitor activity from visitors.js (window.litlyPlaces): every country ever seen gets a steady glow
+// (bigger with more visits) and countries with someone awake in the last 15 minutes pulse.
+// Needs /land.js (1-degree land mask) and /centroids.js (country centers).
 (function () {
   const TAU = Math.PI * 2, RAD = Math.PI / 180;
   const ACCENT = [134, 154, 213];
-
-  // [lat, lon]
-  const CITIES = [
-    [40.7,-74],[34,-118.2],[41.9,-87.6],[19.4,-99.1],[-23.5,-46.6],[-34.6,-58.4],[4.7,-74.1],[51.5,-.1],[48.9,2.3],[52.5,13.4],
-    [40.4,-3.7],[6.5,3.4],[30,31.2],[-1.3,36.8],[-26.2,28],[41,29],[55.8,37.6],[25.2,55.3],[19,72.9],[28.6,77.2],[13.8,100.5],
-    [1.35,103.8],[-6.2,106.8],[14.6,121],[22.3,114.2],[31.2,121.5],[37.6,127],[35.7,139.7],[-33.9,151.2],[-36.8,174.8],
-    [43.7,-79.4],[49.3,-123.1],[21.3,-157.9],[61.2,-149.9],[-12,-77],[-33.4,-70.7],[35.7,51.4],[24.9,67],[23.8,90.4],
-    [52.2,21],[59.3,18.1],[41.9,12.5],[33.7,-84.4],[32.8,-96.8],[25.8,-80.2],[47.6,-122.3],[53.3,-6.3],[-37.8,145],[9,38.7],
-  ];
 
   const vec = (lat, lon) => { const c = Math.cos(lat * RAD); return [c * Math.sin(lon * RAD), Math.sin(lat * RAD), c * Math.cos(lon * RAD)]; };
   const smooth = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
@@ -68,14 +60,17 @@
       canvas.width = canvas.height = Math.round(size * dpr);
     }
 
+    // Real places, from the latest visitor snapshot: awake ones pulse, all of them glow.
+    const places = () => (window.litlyPlaces || []).filter((p) => window.COUNTRY_LL && window.COUNTRY_LL[p.c]);
     function spawn(now) {
-      const h = new Date().getUTCHours() + new Date().getUTCMinutes() / 60;
-      // Cities where it's currently late night are far more likely to light up.
-      let total = 0;
-      const w = CITIES.map((c) => { const lh = (h + c[1] / 15 + 24) % 24; const x = lh >= 23 || lh < 5 ? 1 : lh < 7 || lh >= 21 ? .35 : .05; total += x; return x; });
+      const awake = places().filter((p) => p.a > 0);
+      if (!awake.length) return;
+      let total = 0; awake.forEach((p) => { total += p.a; });
       let pick = Math.random() * total, i = 0;
-      while (i < w.length - 1 && (pick -= w[i]) > 0) i++;
-      events.push({ v: vec(CITIES[i][0], CITIES[i][1]), t0: now });
+      while (i < awake.length - 1 && (pick -= awake[i].a) > 0) i++;
+      const ll = window.COUNTRY_LL[awake[i].c];
+      // a little scatter so a whole country doesn't pulse from one pixel
+      events.push({ v: vec(ll[0] + (Math.random() - .5) * 5, ll[1] + (Math.random() - .5) * 7), t0: now });
     }
 
     function frame(now) {
@@ -84,7 +79,7 @@
         yaw += (reduce ? 0 : dt * 0.006) + vel; // gentle spin plus any leftover flick
         vel *= 0.95;
       }
-      if (!reduce && now > nextEvent) { spawn(now); nextEvent = now + 350 + Math.random() * 700; }
+      if (!reduce && now > nextEvent) { spawn(now); nextEvent = now + 600 + Math.random() * 900; }
       draw(now);
     }
 
@@ -127,7 +122,19 @@
         ctx.fill();
       }
 
-      // "someone just posted here" pulses
+      // every country that has ever visited: a steady glow that grows with visits
+      const maxN = Math.max(1, ...places().map((p) => p.n));
+      for (const pl of places()) {
+        const ll = window.COUNTRY_LL[pl.c], p = rot(...vec(ll[0], ll[1]));
+        if (p[2] <= .04) continue;
+        const px = cx + p[0] * R, py = cy - p[1] * R, k = Math.log(1 + pl.n) / Math.log(1 + maxN);
+        const rr = dot * (2.2 + 3.5 * k);
+        const gg = ctx.createRadialGradient(px, py, 0, px, py, rr * 2.4);
+        gg.addColorStop(0, `rgba(235,240,255,${(.55 + .3 * k) * p[2]})`); gg.addColorStop(.35, `rgba(${ACCENT},${.4 * p[2]})`); gg.addColorStop(1, "rgba(0,0,0,0)");
+        ctx.fillStyle = gg; ctx.beginPath(); ctx.arc(px, py, rr * 2.4, 0, TAU); ctx.fill();
+      }
+
+      // "someone is awake here right now" pulses
       for (let i = events.length - 1; i >= 0; i--) {
         const e = events[i], age = (now - e.t0) / 3200;
         if (age >= 1) { events.splice(i, 1); continue; }
@@ -156,7 +163,7 @@
     new IntersectionObserver((en) => { onScreen = en[0].isIntersecting; }).observe(canvas);
     setInterval(() => { sun = sunVec(new Date()); }, 60000);
     resize();
-    if (reduce) { for (let i = 0; i < 6; i++) { spawn(performance.now() - i * 300); } draw(performance.now()); return; }
+    if (reduce) { addEventListener("litly:places", () => draw(performance.now())); draw(performance.now()); return; }
     (function loop(now) { if (onScreen && !document.hidden) frame(now); else last = now; requestAnimationFrame(loop); })(performance.now());
   };
 })();
