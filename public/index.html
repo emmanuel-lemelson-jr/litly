@@ -95,14 +95,17 @@
 
     /* composer */
     .composer { max-width: 680px; margin: 24px auto 0; padding: 0 22px; }
-    .box { background: var(--tile); border-radius: 22px; padding: 20px 20px 14px; transition: background-color .2s; }
+    .box { background: var(--tile); border-radius: 20px; padding: 16px 18px 12px; transition: background-color .2s; }
     .box:focus-within { background: #1c1c1e; }
     textarea {
-      display: block; width: 100%; min-height: 72px; border: 0; outline: 0; resize: none; background: transparent;
+      display: block; width: 100%; border: 0; outline: 0; resize: none; background: transparent;
       color: var(--text); font: 19px/1.38 var(--font); letter-spacing: -.02em; padding: 0;
+      height: auto; min-height: 27px; max-height: 260px;
+      field-sizing: content;
+      overflow-y: auto;
     }
     textarea::placeholder { color: #6e6e73; }
-    .bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 12px; }
+    .bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 10px; }
     .me { display: flex; align-items: center; gap: 10px; font-size: 14px; color: var(--muted); min-width: 0; }
     .me img { width: 28px; height: 28px; border-radius: 50%; flex: none; }
     .shuffle { border: 0; background: #2c2c2e; color: var(--text); width: 28px; height: 28px; border-radius: 50%; cursor: pointer; line-height: 1; transition: background-color .2s; display: grid; place-items: center; padding: 0; }
@@ -175,7 +178,7 @@
   <section class="composer">
     <form id="post-form" class="box">
       <label for="body" class="hp">Your post</label>
-      <textarea id="body" name="body" maxlength="500" placeholder="Last night I couldn't sleep because…" required></textarea>
+      <textarea id="body" name="body" rows="1" maxlength="500" placeholder="Last night I couldn't sleep because…" required></textarea>
       <div class="hp" aria-hidden="true"><input name="website" tabindex="-1" autocomplete="off"></div>
       <div class="bar">
         <div class="me"><img id="me-avatar" alt="" width="28" height="28"><span id="me-name"></span><button type="button" class="shuffle" id="shuffle" aria-label="Shuffle avatar" title="Shuffle avatar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 3h5v5"/><path d="M4 20 21 3"/><path d="M21 16v5h-5"/><path d="M15 15l6 6"/><path d="M4 4l5 5"/></svg></button></div>
@@ -335,7 +338,13 @@ async function load(force = false) {
 }
 
 const body = $("body");
+function adjustHeight() {
+  if (window.CSS && CSS.supports && CSS.supports("field-sizing", "content")) return;
+  body.style.height = "auto";
+  body.style.height = Math.min(body.scrollHeight, 260) + "px";
+}
 body.addEventListener("input", () => {
+  adjustHeight();
   const n = body.value.trim().length;
   $("count").textContent = body.value.length > 400 ? 500 - body.value.length : "";
   $("post-btn").disabled = n < 3;
@@ -353,7 +362,7 @@ $("post-form").addEventListener("submit", async (e) => {
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || "Couldn't post.");
-    e.target.reset(); $("count").textContent = "";
+    e.target.reset(); $("count").textContent = ""; adjustHeight();
     msg.textContent = "Posted. You're not the only one.";
     await load();
     $("list").firstElementChild?.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -361,6 +370,8 @@ $("post-form").addEventListener("submit", async (e) => {
     msg.textContent = err.message; msg.classList.add("err"); btn.disabled = false;
   }
 });
+
+adjustHeight();
 
 load();
 setInterval(load, 20000);
