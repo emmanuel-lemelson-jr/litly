@@ -201,6 +201,7 @@ document.querySelectorAll(".sso button").forEach((b) =>
       });
       const data = await res.json();
       if (!data.url) throw new Error();
+      try { localStorage.setItem("litly_pending", Date.now()); } catch {}
       location.href = data.url;
     } catch {
       $("note").textContent = ERRORS.unavailable;

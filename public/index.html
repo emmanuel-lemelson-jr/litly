@@ -18,23 +18,21 @@
   <meta property="og:site_name" content="Litly">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://litly.com">
-  <meta property="og:title" content="Can't sleep?">
-  <meta property="og:description" content="You're not alone. Vent anonymously. Resets for everyone in 24h.">
-  <meta property="og:image" content="https://litly.com/og-v2.png">
-  <meta property="og:image:secure_url" content="https://litly.com/og-v2.png">
+  <meta property="og:title" content="Litly: Twitter for night owls">
+  <meta property="og:image" content="https://litly.com/og-v3.png">
+  <meta property="og:image:secure_url" content="https://litly.com/og-v3.png">
   <meta property="og:image:type" content="image/png">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
-  <meta property="og:image:alt" content="Litly - Can't sleep? You're not alone. Vent anonymously.">
+  <meta property="og:image:alt" content="Litly: Twitter for night owls">
   <meta property="og:locale" content="en_US">
 
   <!-- Twitter / X -->
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:url" content="https://litly.com">
-  <meta name="twitter:title" content="Can't sleep?">
-  <meta name="twitter:description" content="You're not alone. Vent anonymously. Resets for everyone in 24h.">
-  <meta name="twitter:image" content="https://litly.com/og-v2.png">
-  <meta name="twitter:image:alt" content="Litly - Can't sleep? You're not alone. Vent anonymously.">
+  <meta name="twitter:title" content="Litly: Twitter for night owls">
+  <meta name="twitter:image" content="https://litly.com/og-v3.png">
+  <meta name="twitter:image:alt" content="Litly: Twitter for night owls">
 
   <link rel="preload" href="/sleepless.webp" as="image" type="image/webp" fetchpriority="high">
   <style>
@@ -182,6 +180,29 @@
 </head>
 <body>
 <nav><div class="in"><a href="/" class="nav-logo" aria-label="Litly"><img src="/logo.svg" alt="Litly" width="130" height="40"></a><div class="nav-auth" id="nav-auth"><a class="nav-btn" href="/signup">Log in</a></div></div></nav>
+<script>
+// Paint the header from the last known auth state before first paint, so it never
+// flashes between "Log in" and the account chip. The server confirms it afterwards.
+window.paintNav = function (me) {
+  var el = document.getElementById("nav-auth"), a = document.createElement("a");
+  if (me) {
+    a.className = "nav-me"; a.href = "/account"; a.setAttribute("aria-label", "Your account");
+    var u = document.createElement("span"); u.textContent = me.username;
+    var i = new Image(30, 30); i.alt = ""; i.src = me.src;
+    a.append(u, i);
+  } else { a.className = "nav-btn"; a.href = "/signup"; a.textContent = "Log in"; }
+  el.replaceChildren(a); el.style.visibility = "";
+};
+(function () {
+  try {
+    var me = JSON.parse(localStorage.getItem("litly_me") || "null");
+    if (me && me.username && me.src) return window.paintNav(me);
+    var pending = Number(localStorage.getItem("litly_pending") || 0);
+    // Just came back from signing in: wait for the server instead of flashing "Log in".
+    if (pending && Date.now() - pending < 600000) document.getElementById("nav-auth").style.visibility = "hidden";
+  } catch (e) {}
+})();
+</script>
 
 <main>
   <section class="hero">
@@ -244,15 +265,20 @@ $("shuffle").addEventListener("click", () => {
   shuffleN++; localStorage.setItem("shuffle", shuffleN); computeSeed();
 });
 
-// Header: "Log in" for visitors, avatar + username once signed in.
+// Header: confirm the cached auth state with the server and only repaint if it changed.
 fetch("/api/profile").then((r) => (r.ok ? r.json() : null)).then((me) => {
-  if (!me) return;
-  const a = document.createElement("a"); a.className = "nav-me"; a.href = "/account"; a.setAttribute("aria-label", "Your account");
-  const u = document.createElement("span"); u.textContent = me.username;
-  const img = new Image(30, 30); img.alt = ""; img.src = avatarUri(me.avatar);
-  a.append(u, img);
-  $("nav-auth").replaceChildren(a);
-}).catch(() => {});
+  try { localStorage.removeItem("litly_pending"); } catch {}
+  let cached = null;
+  try { cached = JSON.parse(localStorage.getItem("litly_me") || "null"); } catch {}
+  if (!me) {
+    try { localStorage.removeItem("litly_me"); } catch {}
+    if (cached || $("nav-auth").style.visibility === "hidden") paintNav(null);
+    return;
+  }
+  const next = { username: me.username, avatar: me.avatar, src: avatarUri(me.avatar) };
+  try { localStorage.setItem("litly_me", JSON.stringify(next)); } catch {}
+  if (!cached || cached.username !== next.username || cached.avatar !== next.avatar || $("nav-auth").style.visibility === "hidden") paintNav(next);
+}).catch(() => { $("nav-auth").style.visibility = ""; });
 
 let skew = 0, resetAt = null, seen = new Set(), first = true;
 const openThreads = new Set();

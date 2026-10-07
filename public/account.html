@@ -118,6 +118,7 @@ function fillPicker(keep) {
 }
 function show(p) {
   saved = { username: p.username, avatar: p.avatar };
+  try { localStorage.setItem("litly_me", JSON.stringify({ username: p.username, avatar: p.avatar, src: avatarUri(p.avatar) })); } catch {}
   $("show-user").textContent = p.username;
   $("username").value = p.username;
   $("name").textContent = p.name || "";
@@ -127,7 +128,7 @@ function show(p) {
 }
 
 fetch("/api/profile").then((r) => {
-  if (r.status === 401) { location.replace("/signup"); return null; }
+  if (r.status === 401) { try { localStorage.removeItem("litly_me"); } catch {} location.replace("/signup"); return null; }
   return r.json();
 }).then((p) => {
   if (!p) return;
@@ -149,6 +150,7 @@ $("save").addEventListener("click", async () => {
 });
 
 $("signout").addEventListener("click", async () => {
+  try { localStorage.removeItem("litly_me"); } catch {}
   try { await fetch("/api/auth/sign-out", { method: "POST", headers: { "content-type": "application/json" }, body: "{}" }); } catch {}
   location.href = "/";
 });

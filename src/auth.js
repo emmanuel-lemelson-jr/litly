@@ -42,6 +42,7 @@ export async function createAuth(env, origin) {
     socialProviders,
     // Apple posts the sign-in result back from appleid.apple.com.
     trustedOrigins: ["https://appleid.apple.com"],
-    session: { expiresIn: 60 * 60 * 24 * 30 },
+    // Stay signed in for 90 days of inactivity; each day of use pushes the expiry out again.
+    session: { expiresIn: 60 * 60 * 24 * 90, updateAge: 60 * 60 * 24 },
   });
 }
