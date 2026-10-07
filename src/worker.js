@@ -262,8 +262,8 @@ async function admin(request, env, path) {
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
-    // One canonical host: www.litly.com -> litly.com (keeps localStorage/identity in one place)
-    if (url.hostname === "www.litly.com") {
+    // One canonical host: litly.com (keeps localStorage/identity in one place)
+    if (url.hostname !== "litly.com" && url.hostname !== "localhost" && url.hostname !== "127.0.0.1") {
       url.hostname = "litly.com";
       return Response.redirect(url.toString(), 301);
     }

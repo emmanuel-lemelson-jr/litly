@@ -22,7 +22,7 @@ Live at **https://litly.com**. An anonymous "what kept you up last night?" feed.
   - **Duplicates:** Exact duplicate posts or replies are rejected.
   - **Honeypot:** A hidden `website` field catches bots.
 - **Moderation:** `/admin` (`public/admin.html`) lists posts and replies and can delete, restore or ban. The API is protected by the `ADMIN_TOKEN` secret, sent as `Authorization: Bearer <token>`. Banning deletes all of that person's content.
-- **Domains:** `www.litly.com` redirects to `litly.com`.
+- **Domains:** All non-canonical hosts (`www.litly.com` and `*.workers.dev`, including `cant-sleep-feed.flektmail.workers.dev` via `redirect-worker/`) 301 redirect to `litly.com`.
 
 ## Design
 Apple-style minimalism: black background, system SF Pro font and a soothing periwinkle accent (`#869ad5`) matching the tired avatar mascot. The brand logo (`public/logo.svg`) features a custom tired mascot wrapped in a blanket in place of the letter "I" (Pixar-style). The hero features an animated sleeping character (`public/sleepless.webp` with `public/sleepless.gif` fallback, preloaded with high fetch priority) that blinks and yawns over the main headline ("Can't sleep?"). Subhead: "You're not alone tonight. Vent anonymously." The post composer is a compact auto-expanding field featuring a character-by-character typing placeholder cycling punchy late-night thoughts (animating immediately on start). Keep everything else simple, with no decorative noise.

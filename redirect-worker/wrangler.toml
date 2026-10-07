@@ -1,0 +1,5 @@
+name = "cant-sleep-feed"
+main = "index.js"
+compatibility_date = "2025-01-01"
+account_id = "2172c2294373cf8516f18029f5c274ef"
+workers_dev = true
