@@ -15,7 +15,7 @@
   nav.after(bar);
   var dlg = document.createElement("dialog");
   dlg.className = "vdlg";
-  dlg.innerHTML = '<div class="vhead"><span class="vdot"></span><h2>Visitors <span class="vcount"></span></h2><button type="button" class="vclose" aria-label="Close">×</button></div><ul class="vlist"></ul>';
+  dlg.innerHTML = '<div class="vhead"><h2>Visitors <span class="vcount"></span></h2><button type="button" class="vclose" aria-label="Close">×</button></div><ul class="vlist"></ul>';
   document.body.append(dlg);
   var $ = function (el, s) { return el.querySelector(s); };
   var list = $(dlg, ".vlist"), rows = new Map(), snap = null;
