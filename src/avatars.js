@@ -1,13 +1,17 @@
-import { createAvatar } from "@dicebear/core";
-import { funEmoji } from "@dicebear/collection";
+import { Style, Avatar } from "@dicebear/core";
+import shadows from "@dicebear/styles/shadows.json" with { type: "json" };
 
-// fun-emoji has 15 eyes x 15 mouths. To get far more variety for hundreds of
-// users we widen the palette, mix solid/gradient backgrounds and add a slight tilt.
+// DiceBear "Shadows" (CC0): anonymous silhouettes, a fitting look for an anonymous
+// site. 7 shoulders x 5 heads x 13 tops, in light pastel backgrounds with deep
+// navy ink so they always read clearly, even at 26px.
+const style = new Style(shadows);
+const BACKGROUNDS = ["c9d1f5", "b8c4f2", "d5c8f2", "bfe3da", "f6d3c0", "f3dca0", "f5c6d6", "bfdff3", "d3e8bd", "e7e9f7"];
+const INKS = ["1c2452", "262f6b", "2a2052", "17384a"];
+
 window.avatarUri = (seed) =>
-  createAvatar(funEmoji, {
+  new Avatar(style, {
     seed,
-    radius: 50,
-    backgroundType: ["solid", "gradientLinear"],
-    backgroundColor: ["fcbc34", "d84be5", "d9915b", "f6d594", "059ff2", "71cf62", "ff6b6b", "a78bfa", "2dd4bf", "fb923c", "f472b6", "d1fe17"],
-    rotate: [-12, 12],
+    borderRadius: 50,
+    backgroundColor: BACKGROUNDS,
+    inkColor: INKS,
   }).toDataUri();
