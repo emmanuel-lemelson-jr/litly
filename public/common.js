@@ -100,7 +100,8 @@ function postCard(p, { now, enter, me, onDelete }) {
   if (p.body) { const text = document.createElement("p"); text.textContent = p.body; box.append(text); } // never innerHTML user input
   if (p.image) {
     const im = new Image(); im.className = "pimg"; im.src = "/" + p.image; im.alt = "Photo attached to the post"; im.loading = "lazy"; im.decoding = "async";
-    if (p.image_w && p.image_h) { im.width = p.image_w; im.height = p.image_h; }
+    // Feed photos sit in a frame between 4:5 and 16:9 and are cropped to it; the post page shows the whole photo.
+    if (p.image_w && p.image_h) im.style.aspectRatio = Math.min(1.78, Math.max(0.8, p.image_w / p.image_h));
     box.append(im);
   }
   const href = `/p/${p.id}`;
