@@ -12,8 +12,8 @@ routes = [
 [assets]
 directory = "./public"
 binding = "ASSETS"
-# Serve the static page for "/", let the Worker handle /api/*
-run_worker_first = ["/api/*"]
+# Run Worker first so canonical host redirects (www -> apex, workers.dev -> apex) execute on all paths
+run_worker_first = true
 
 [[d1_databases]]
 binding = "DB"
