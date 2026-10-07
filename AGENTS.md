@@ -1,5 +1,7 @@
 # Litly
 
+> **Keep this file current.** Whenever product direction, features, architecture, limits, domains or deploy steps change, update this doc in the same change, without waiting to be asked. Remove anything that's no longer true.
+
 Live at **https://litly.com**. An anonymous "what kept you up last night?" feed. Anyone can post without an account, and the whole feed is wiped for everyone at the same moment every day.
 
 ## What users can do
