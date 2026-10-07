@@ -1,7 +1,7 @@
 name = "cant-sleep-feed"
 main = "src/worker.js"
 compatibility_date = "2025-01-01"
-account_id = "724ddd72d3f69382eca6ffaa831086ef"
+account_id = "1c19c252143c91371ba40fdad4e6551d"
 workers_dev = true
 compatibility_flags = ["nodejs_compat"]
 
@@ -19,8 +19,10 @@ run_worker_first = true
 [[d1_databases]]
 binding = "DB"
 database_name = "cant-sleep"
-database_id = "40b153cb-bdc2-4225-b1ac-be194538b876"
+database_id = "c8e65fa7-16bc-477a-88ba-f416b03b5234"
 
-# Wipe posts older than 24h every 15 minutes (reads are also filtered by time)
-[triggers]
-crons = ["*/15 * * * *"]
+# Photos attached to posts (deleted along with the post). Bucket created with:
+#   npx wrangler r2 bucket create litly-media
+[[r2_buckets]]
+binding = "MEDIA"
+bucket_name = "litly-media"

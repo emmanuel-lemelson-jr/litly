@@ -5,9 +5,14 @@ CREATE TABLE IF NOT EXISTS posts (
   avatar TEXT,
   reports INTEGER NOT NULL DEFAULT 0,
   hidden INTEGER NOT NULL DEFAULT 0,
-  created_at INTEGER NOT NULL
+  created_at INTEGER NOT NULL,
+  user_id TEXT,        -- author's account (NULL on posts made before sign-in was required)
+  image TEXT,          -- R2 key of the attached photo, if any
+  image_w INTEGER,
+  image_h INTEGER
 );
 CREATE INDEX IF NOT EXISTS idx_posts_created ON posts(created_at);
+CREATE INDEX IF NOT EXISTS idx_posts_user ON posts(user_id, created_at);
 CREATE INDEX IF NOT EXISTS idx_posts_ip ON posts(ip_hash, created_at);
 
 CREATE TABLE IF NOT EXISTS subscribers (
@@ -38,12 +43,24 @@ CREATE TABLE IF NOT EXISTS replies (
   body TEXT NOT NULL,
   avatar TEXT,
   ip_hash TEXT NOT NULL,
-  created_at INTEGER NOT NULL
+  created_at INTEGER NOT NULL,
+  parent_id INTEGER, -- NULL = top-level reply to the post; otherwise the reply it answers
+  user_id TEXT,      -- author's account (NULL on old replies and on deleted ones)
+  deleted INTEGER NOT NULL DEFAULT 0 -- 1 = author deleted it but other replies hang off it, so it stays as "[deleted]"
 );
 CREATE INDEX IF NOT EXISTS idx_replies_post ON replies(post_id, created_at);
+CREATE INDEX IF NOT EXISTS idx_replies_user ON replies(user_id, created_at);
 
--- Accounts (Better Auth). These hold real name/email from Google or Apple
--- sign-in. Posts and replies never reference them, so posting stays anonymous.
+-- Hearts on replies (one per person per reply), like metoos does for posts.
+CREATE TABLE IF NOT EXISTS reply_metoos (
+  reply_id INTEGER NOT NULL,
+  ip_hash TEXT NOT NULL,
+  PRIMARY KEY (reply_id, ip_hash)
+);
+
+-- Accounts (Better Auth). These hold real name/email from Google or Apple sign-in.
+-- Posts and replies point at the account by id but are shown under the public
+-- profile username only, never the real name or email.
 CREATE TABLE IF NOT EXISTS "user" (
   "id" TEXT NOT NULL PRIMARY KEY,
   "name" TEXT NOT NULL,
