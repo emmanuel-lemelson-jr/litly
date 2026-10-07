@@ -172,27 +172,39 @@
 
     let vibeRoom = null;
     async function init() {
+      let posts = [];
+      let resetAt = Date.now() + 86400000;
       try {
-        const { posts, now, resetAt } = await (await fetch("/api/posts")).json();
+        const res = await (await fetch("/api/posts")).json();
+        posts = res.posts || [];
+        if (res.resetAt) resetAt = res.resetAt;
+      } catch (err) {
+        console.warn("Could not load posts:", err);
+      }
+
+      try {
         await computeSeed(resetAt);
         const container = document.getElementById("vibe-fullscreen-container");
-        vibeRoom = window.initVibeRoom(container, {
-          localSeed: mySeed,
-          localName: nameFor(mySeed),
-          posts: posts
-        });
+        if (container && window.initVibeRoom) {
+          vibeRoom = window.initVibeRoom(container, {
+            localSeed: mySeed,
+            localName: nameFor(mySeed),
+            posts: posts
+          });
+        }
 
         // Clock
         const tick = () => {
           let left = resetAt - Date.now();
           if (left < 0) left = 0;
           const h = Math.floor(left / 3600000), m = Math.floor(left / 60000) % 60;
-          document.getElementById("nav-clock").textContent = `Resets in ${h}h ${String(m).padStart(2, "0")}m`;
+          const el = document.getElementById("nav-clock");
+          if (el) el.textContent = `Resets in ${h}h ${String(m).padStart(2, "0")}m`;
         };
         tick();
         setInterval(tick, 1000);
       } catch (err) {
-        console.error(err);
+        console.error("Vibe room init error:", err);
       }
     }
     init();
