@@ -1,0 +1,141 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #000;
+    color: #f5f5f7;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+    padding: 30px;
+    width: 900px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .card {
+    background: #0a0a0e;
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 20px;
+    padding: 24px 30px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .scene {
+    position: relative;
+    display: inline-flex;
+    align-items: flex-end;
+    justify-content: center;
+    margin: 0 auto -40px;
+    z-index: 1;
+  }
+  .bed-wrap {
+    position: relative;
+    width: 270px;
+    -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 44%, rgba(0,0,0,0.15) 75%, transparent 92%);
+    mask-image: linear-gradient(to bottom, #000 0%, #000 44%, rgba(0,0,0,0.15) 75%, transparent 92%);
+  }
+  .bed-wrap img { width: 100%; height: auto; display: block; }
+
+  .nightstand-wrap {
+    position: relative;
+    width: 185px;
+    margin-right: -20px;
+    margin-bottom: 12px;
+    z-index: 0;
+  }
+  .nightstand-wrap img {
+    width: 100%;
+    display: block;
+    filter: drop-shadow(0 15px 30px rgba(0,0,0,0.9));
+  }
+
+  /* Screen overlay mapped to clock face */
+  .clock-face {
+    position: absolute;
+    left: 33.5%;
+    top: 24%;
+    width: 55%;
+    height: 25%;
+    transform: skewY(-9.5deg);
+    transform-origin: left center;
+    pointer-events: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .solid-time-display {
+    display: inline-flex;
+    align-items: baseline;
+    justify-content: center;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Rounded", "SF Pro Display", sans-serif;
+    font-weight: 800;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.01em;
+  }
+
+  .solid-time {
+    font-size: 32px;
+    color: #ff3b30;
+    text-shadow:
+      0 0 2px #fff,
+      0 0 6px #ff3b30,
+      0 0 16px rgba(255, 59, 48, 0.9),
+      0 0 28px rgba(255, 59, 48, 0.5);
+  }
+
+  .solid-colon {
+    margin: 0 1px;
+    position: relative;
+    top: -2px;
+    animation: blink-colon 1s infinite step-start;
+  }
+
+  .solid-ampm {
+    font-size: 11px;
+    font-weight: 800;
+    color: #ff3b30;
+    margin-left: 4px;
+    text-shadow: 0 0 6px rgba(255, 59, 48, 0.9);
+  }
+
+  /* Glass reflection */
+  .glass-glare {
+    position: absolute;
+    inset: -2px 0 0 -2px;
+    border-radius: 6px;
+    background: linear-gradient(135deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.02) 40%, transparent 42%);
+    pointer-events: none;
+  }
+
+  h2 { font-size: 42px; margin-top: 0; font-weight: 700; text-shadow: 0 2px 20px rgba(0,0,0,0.9); }
+</style>
+</head>
+<body>
+
+  <div class="card">
+    <div class="scene">
+      <div class="nightstand-wrap">
+        <img src="big_clock_cropped.png" alt="Nightstand">
+        <div class="clock-face">
+          <div class="solid-time-display">
+            <span class="solid-time">4<span class="solid-colon">:</span>26</span>
+            <span class="solid-ampm">AM</span>
+          </div>
+          <div class="glass-glare"></div>
+        </div>
+      </div>
+      <div class="bed-wrap">
+        <img src="clean_frames_slow/frame_0.0.png" alt="Bed">
+      </div>
+    </div>
+    <h2>Can't sleep?</h2>
+  </div>
+
+</body>
+</html>

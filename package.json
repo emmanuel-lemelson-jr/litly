@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "build": "esbuild src/avatars.js --bundle --minify --format=iife --outfile=public/avatars.js",
+    "build": "esbuild src/avatars.js --bundle --minify --format=iife --outfile=public/avatars.js && esbuild src/viberoom.js --bundle --minify --format=iife --outfile=public/viberoom.js",
     "db:local": "npx wrangler d1 execute cant-sleep --local --file=schema.sql",
     "dev": "npm run build && npm run db:local && npx wrangler dev --port 8799",
     "deploy": "npm run build && npx wrangler deploy"
@@ -15,7 +15,8 @@
   "type": "commonjs",
   "dependencies": {
     "@dicebear/collection": "^9.4.2",
-    "@dicebear/core": "^9.4.3"
+    "@dicebear/core": "^9.4.3",
+    "three": "^0.186.1"
   },
   "devDependencies": {
     "esbuild": "^0.28.2",
