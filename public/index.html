@@ -239,21 +239,22 @@ function adjustHeight() {
   body.style.height = Math.min(body.scrollHeight, 260) + "px";
 }
 
-const PREFIX = "Up late because ";
+const NARROW = window.matchMedia && window.matchMedia("(max-width: 520px)").matches;
+const PREFIX = NARROW ? "Up late: " : "Up late because ";
 const PHRASES = [
-  "my brain won't stop…",
+  "my mind races…",
   "too much coffee…",
   "replaying 2019…",
-  "a sudden 2 AM idea…",
-  "overthinking everything…",
-  "worrying about tomorrow…",
+  "a 2 AM idea…",
+  "overthinking…",
+  "tomorrow…",
   "warm pillows…",
-  "I can't shut off…"
+  "I can't unwind…"
 ];
 
 const prefersReducedMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 if (prefersReducedMotion) {
-  body.placeholder = "Up late because…";
+  body.placeholder = NARROW ? "Up late…" : "Up late because…";
 }
 
 let isInitial = true;
