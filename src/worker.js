@@ -278,9 +278,6 @@ export default {
       console.error(err);
       return json({ error: "Something broke. Try again." }, 500);
     }
-    if (url.pathname === "/room") {
-      return env.ASSETS.fetch(new Request(new URL("/room.html", request.url), request));
-    }
     return env.ASSETS.fetch(request);
   },
 
