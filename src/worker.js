@@ -278,7 +278,13 @@ export default {
       console.error(err);
       return json({ error: "Something broke. Try again." }, 500);
     }
-    return env.ASSETS.fetch(request);
+    const res = await env.ASSETS.fetch(request);
+    if (url.pathname.includes("favicon") || url.pathname.includes("apple-touch-icon")) {
+      const headers = new Headers(res.headers);
+      headers.set("cache-control", "no-cache, must-revalidate");
+      return new Response(res.body, { status: res.status, statusText: res.statusText, headers });
+    }
+    return res;
   },
 
   async scheduled(_event, env) {

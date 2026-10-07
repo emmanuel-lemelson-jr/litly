@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "build": "esbuild src/avatars.js --bundle --minify --format=iife --outfile=public/avatars.js",
+    "build": "npm run favicons && esbuild src/avatars.js --bundle --minify --format=iife --outfile=public/avatars.js",
+    "favicons": "node scripts/build-favicons.js",
     "db:local": "npx wrangler d1 execute cant-sleep --local --file=schema.sql",
     "dev": "npm run build && npm run db:local && npx wrangler dev --port 8799",
     "deploy": "npm run build && npx wrangler deploy"
