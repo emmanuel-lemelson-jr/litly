@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Admin</title>
+<style>
+  body { margin: 0; background: #000; color: #f5f5f7; font: 15px/1.4 -apple-system, BlinkMacSystemFont, "SF Pro Text", Helvetica, Arial, sans-serif; }
+  main { max-width: 720px; margin: 0 auto; padding: 24px 16px 80px; }
+  h1 { font-size: 24px; margin: 0 0 16px; }
+  .row { background: #161617; border-radius: 14px; padding: 14px 16px; margin-bottom: 10px; }
+  .row.hidden { outline: 1px solid #ff9f0a; }
+  .meta { color: #86868b; font-size: 12px; margin-bottom: 6px; }
+  p { margin: 0 0 10px; white-space: pre-wrap; overflow-wrap: anywhere; }
+  button { border: 0; border-radius: 980px; padding: 7px 14px; margin-right: 8px; font: inherit; cursor: pointer; background: #2c2c2e; color: #f5f5f7; }
+  button.del { background: #ff453a; color: #fff; }
+  button.ban { background: #7a1d17; color: #fff; }
+  #login { display: flex; gap: 8px; margin-bottom: 16px; }
+  input { flex: 1; background: #161617; color: #f5f5f7; border: 1px solid #2a2a2c; border-radius: 10px; padding: 10px 12px; font: inherit; }
+  .err { color: #ff453a; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Moderation</h1>
+  <form id="login"><input id="token" type="password" placeholder="Admin token" autocomplete="current-password"><button>Open</button></form>
+  <p id="msg" class="err"></p>
+  <div id="list"></div>
+</main>
+<script>
+const $ = (id) => document.getElementById(id);
+let token = sessionStorage.getItem("admintoken") || "";
+const api = (path, body) => fetch(path, {
+  method: body ? "POST" : "GET",
+  headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
+  body: body ? JSON.stringify(body) : undefined,
+});
+async function load() {
+  if (!token) return;
+  const res = await api("/api/admin/posts");
+  if (res.status === 401) { $("msg").textContent = "Wrong token."; sessionStorage.removeItem("admintoken"); return; }
+  $("msg").textContent = "";
+  $("login").hidden = true;
+  const { posts, replies } = await res.json();
+  const replyRows = (replies || []).map((r) => {
+    const row = document.createElement("div"); row.className = "row";
+    const meta = document.createElement("div"); meta.className = "meta";
+    meta.textContent = `reply #${r.id} on post #${r.post_id} · ${new Date(r.created_at).toLocaleString()} · ip ${r.ip}`;
+    const text = document.createElement("p"); text.textContent = r.body;
+    const mk = (label, cls, path, msg) => {
+      const b = document.createElement("button"); b.textContent = label; if (cls) b.className = cls;
+      b.onclick = async () => { if (msg && !confirm(msg)) return; await api(path, { id: r.id }); load(); };
+      return b;
+    };
+    row.append(meta, text, mk("Delete reply", "del", "/api/admin/delete-reply"), mk("Ban poster", "ban", "/api/admin/ban-reply", "Ban this person and delete all their posts and replies?"));
+    return row;
+  });
+  const head = (t) => { const h = document.createElement("h2"); h.textContent = t; h.style.cssText = "font-size:17px;margin:22px 0 10px"; return h; };
+  $("list").replaceChildren(head("Posts"), ...posts.map((p) => {
+    const row = document.createElement("div"); row.className = "row" + (p.hidden ? " hidden" : "");
+    const meta = document.createElement("div"); meta.className = "meta";
+    meta.textContent = `#${p.id} · ${new Date(p.created_at).toLocaleString()} · ip ${p.ip} · ${p.reports} reports${p.hidden ? " · HIDDEN" : ""}`;
+    const text = document.createElement("p"); text.textContent = p.body;
+    const mk = (label, cls, path, confirmMsg) => {
+      const b = document.createElement("button"); b.textContent = label; if (cls) b.className = cls;
+      b.onclick = async () => { if (confirmMsg && !confirm(confirmMsg)) return; await api(path, { id: p.id }); load(); };
+      return b;
+    };
+    row.append(meta, text, mk("Delete", "del", "/api/admin/delete"));
+    if (p.hidden) row.append(mk("Restore", "", "/api/admin/restore"));
+    row.append(mk("Ban poster", "ban", "/api/admin/ban", "Ban this poster and delete all their posts?"));
+    return row;
+  }), ...(replyRows.length ? [head("Replies"), ...replyRows] : []));
+}
+$("login").addEventListener("submit", (e) => { e.preventDefault(); token = $("token").value.trim(); sessionStorage.setItem("admintoken", token); load(); });
+load(); setInterval(load, 15000);
+</script>
+</body>
+</html>

@@ -1,0 +1,25 @@
+name = "cant-sleep-feed"
+main = "src/worker.js"
+compatibility_date = "2025-01-01"
+account_id = "724ddd72d3f69382eca6ffaa831086ef"
+workers_dev = true
+
+routes = [
+  { pattern = "litly.com", custom_domain = true },
+  { pattern = "www.litly.com", custom_domain = true },
+]
+
+[assets]
+directory = "./public"
+binding = "ASSETS"
+# Serve the static page for "/", let the Worker handle /api/*
+run_worker_first = ["/api/*"]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "cant-sleep"
+database_id = "40b153cb-bdc2-4225-b1ac-be194538b876"
+
+# Wipe posts older than 24h every 15 minutes (reads are also filtered by time)
+[triggers]
+crons = ["*/15 * * * *"]

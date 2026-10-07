@@ -1,0 +1,316 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Litly</title>
+  <meta name="description" content="Say what kept you up. Anonymously. Gone for everyone every 24 hours.">
+  <meta name="color-scheme" content="dark">
+  <meta name="theme-color" content="#000000">
+  <meta property="og:title" content="What kept you up last night?">
+  <meta property="og:description" content="Anonymous. No account. Gone for everyone every 24 hours.">
+  <style>
+    :root {
+      --bg: #000;
+      --tile: #161617;
+      --text: #f5f5f7;
+      --muted: #86868b;
+      --hair: #2a2a2c;
+      --blue: #0071e3;
+      --link: #2997ff;
+      --err: #ff453a;
+      --font: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    }
+    * { box-sizing: border-box; }
+    html { -webkit-text-size-adjust: 100%; }
+    body { margin: 0; background: var(--bg); color: var(--text); font: 17px/1.47 var(--font); letter-spacing: -.022em; -webkit-font-smoothing: antialiased; }
+    .hp { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+
+    /* nav: thin, translucent, like Apple's global nav */
+    nav {
+      position: sticky; top: 0; z-index: 10; height: 48px;
+      background: rgba(0,0,0,.72); backdrop-filter: saturate(180%) blur(20px); -webkit-backdrop-filter: saturate(180%) blur(20px);
+    }
+    nav .in { max-width: 980px; height: 100%; margin: 0 auto; padding: 0 22px; display: flex; align-items: center; justify-content: space-between; font-size: 13px; letter-spacing: -.01em; }
+    nav b { font-weight: 600; }
+    nav span { color: var(--muted); font-variant-numeric: tabular-nums; }
+
+    /* hero */
+    .hero { text-align: center; padding: 36px 22px 0; }
+    h1 { font-size: clamp(34px, 6vw, 52px); line-height: 1.05; font-weight: 700; letter-spacing: -.015em; margin: 0; }
+    .sub { font-size: clamp(16px, 2vw, 19px); line-height: 1.33; color: var(--muted); margin: 8px auto 0; max-width: 32em; font-weight: 400; }
+
+    /* countdown */
+    .clock { margin: 20px 0 2px; font-size: clamp(40px, 7vw, 64px); font-weight: 200; line-height: 1; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+    .clock-cap { color: var(--muted); font-size: 14px; margin: 0; }
+
+    /* composer */
+    .composer { max-width: 680px; margin: 24px auto 0; padding: 0 22px; }
+    .box { background: var(--tile); border-radius: 22px; padding: 20px 20px 14px; transition: background-color .2s; }
+    .box:focus-within { background: #1c1c1e; }
+    textarea {
+      display: block; width: 100%; min-height: 72px; border: 0; outline: 0; resize: none; background: transparent;
+      color: var(--text); font: 19px/1.38 var(--font); letter-spacing: -.02em; padding: 0;
+    }
+    textarea::placeholder { color: #6e6e73; }
+    .bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 12px; }
+    .me { display: flex; align-items: center; gap: 10px; font-size: 14px; color: var(--muted); min-width: 0; }
+    .me img { width: 28px; height: 28px; border-radius: 50%; flex: none; }
+    .shuffle { border: 0; background: #2c2c2e; color: var(--text); width: 28px; height: 28px; border-radius: 50%; cursor: pointer; line-height: 1; transition: background-color .2s; display: grid; place-items: center; padding: 0; }
+    .shuffle svg { width: 16px; height: 16px; }
+    .shuffle:hover { background: #3a3a3c; }
+    .shuffle:active svg { transform: scale(.85); }
+    .shuffle:focus-visible { outline: 2px solid var(--link); outline-offset: 2px; }
+    .right { display: flex; align-items: center; gap: 14px; }
+    .count { font-size: 13px; color: #6e6e73; font-variant-numeric: tabular-nums; }
+    .btn {
+      border: 0; cursor: pointer; background: var(--blue); color: #fff; font: 400 17px var(--font); letter-spacing: -.02em;
+      padding: 9px 22px; border-radius: 980px; transition: background-color .2s;
+    }
+    .btn:hover:not(:disabled) { background: #0077ed; }
+    .btn:disabled { background: #2c2c2e; color: #6e6e73; cursor: default; }
+    .btn:focus-visible { outline: 2px solid var(--link); outline-offset: 3px; }
+    .msg { min-height: 20px; margin: 8px 4px 0; font-size: 14px; color: var(--muted); text-align: center; }
+    .msg.err { color: var(--err); }
+
+    /* feed */
+    .feed { max-width: 680px; margin: 36px auto 0; padding: 0 22px 120px; }
+    .feed h2 { font-size: 28px; font-weight: 600; letter-spacing: -.01em; margin: 0 0 6px; }
+    .feed .cap { color: var(--muted); margin: 0 0 12px; font-size: 15px; }
+    #list { list-style: none; margin: 0; padding: 0; }
+    .post { display: grid; grid-template-columns: 40px 1fr; gap: 14px; padding: 18px 0; border-top: 1px solid var(--hair); }
+    .post img { width: 40px; height: 40px; border-radius: 50%; }
+    .who { display: flex; gap: 8px; align-items: baseline; font-size: 14px; color: var(--muted); }
+    .who b { color: var(--text); font-weight: 600; }
+    .post p { margin: 4px 0 0; font-size: 19px; line-height: 1.42; white-space: pre-wrap; overflow-wrap: anywhere; }
+    .actions { display: flex; gap: 6px; margin: 10px 0 0 -10px; }
+    .act { border: 0; background: none; color: #6e6e73; font: 14px var(--font); letter-spacing: -.01em; padding: 6px 10px; border-radius: 980px; cursor: pointer; transition: background-color .15s, color .15s; }
+    .act:hover { background: #1c1c1e; color: var(--text); }
+    .act:focus-visible { outline: 2px solid var(--link); outline-offset: 1px; }
+    .act.on { color: var(--link); font-weight: 600; }
+    .thread { margin: 6px 0 0; padding-left: 14px; border-left: 2px solid var(--hair); display: grid; gap: 14px; }
+    .reply { display: grid; grid-template-columns: 26px 1fr; gap: 10px; }
+    .reply img { width: 26px; height: 26px; border-radius: 50%; }
+    .reply .who { font-size: 13px; }
+    .reply p { font-size: 16px; margin: 2px 0 0; }
+    .reply-form { display: flex; gap: 8px; align-items: center; }
+    .reply-form input { flex: 1; min-width: 0; background: var(--tile); color: var(--text); border: 0; border-radius: 980px; padding: 9px 16px; font: 15px var(--font); letter-spacing: -.01em; outline: 0; }
+    .reply-form input::placeholder { color: #6e6e73; }
+    .reply-form button { border: 0; background: var(--blue); color: #fff; font: 15px var(--font); padding: 8px 16px; border-radius: 980px; cursor: pointer; }
+    .reply-form button:disabled { background: #2c2c2e; color: #6e6e73; cursor: default; }
+    .reply-msg { color: var(--err); font-size: 13px; margin: 0; min-height: 0; }
+    .post.enter { animation: enter .5s cubic-bezier(.25,.1,.25,1); }
+    @keyframes enter { from { opacity: 0; transform: translateY(-6px); } }
+    .empty { color: var(--muted); padding: 40px 0; text-align: center; border-top: 1px solid var(--hair); }
+
+    footer { text-align: center; color: #6e6e73; font-size: 12px; padding: 0 22px 40px; }
+
+    @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+  </style>
+</head>
+<body>
+<nav><div class="in"><b>Litly</b><span id="nav-clock"></span></div></nav>
+
+<main>
+  <section class="hero">
+    <h1>What kept you up?</h1>
+    <p class="sub">Anonymous. No account. Gone for everyone at the same moment.</p>
+    <div class="clock" id="clock" role="timer" aria-label="Time until reset">--:--:--</div>
+    <p class="clock-cap" id="clock-cap">until the feed resets</p>
+  </section>
+
+  <section class="composer">
+    <form id="post-form" class="box">
+      <label for="body" class="hp">Your post</label>
+      <textarea id="body" name="body" maxlength="500" placeholder="Last night I couldn't sleep because…" required></textarea>
+      <div class="hp" aria-hidden="true"><input name="website" tabindex="-1" autocomplete="off"></div>
+      <div class="bar">
+        <div class="me"><img id="me-avatar" alt="" width="28" height="28"><span id="me-name"></span><button type="button" class="shuffle" id="shuffle" aria-label="Shuffle avatar" title="Shuffle avatar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 3h5v5"/><path d="M4 20 21 3"/><path d="M21 16v5h-5"/><path d="M15 15l6 6"/><path d="M4 4l5 5"/></svg></button></div>
+        <div class="right"><span class="count" id="count"></span><button class="btn" id="post-btn" type="submit" disabled>Post</button></div>
+      </div>
+    </form>
+    <p class="msg" id="post-msg" role="status"></p>
+  </section>
+
+  <section class="feed">
+    <h2>Tonight</h2>
+    <p class="cap" id="cap">&nbsp;</p>
+    <ul id="list" aria-live="polite"></ul>
+    <p class="empty" id="empty" hidden>No one yet. Be the first.</p>
+  </section>
+</main>
+
+<footer>Anonymous. No accounts. No history.</footer>
+
+<script src="/avatars.js"></script>
+<script>
+const $ = (id) => document.getElementById(id);
+const rtf = new Intl.RelativeTimeFormat(undefined, { numeric: "auto" });
+const ADJ = ["Restless","Wired","Sleepless","Quiet","Wandering","Drifting","Midnight","Hazy","Wide-eyed","Lingering"];
+const NOUN = ["Owl","Moth","Fox","Comet","Moon","Firefly","Cat","Star","Raccoon","Lantern"];
+const nameFor = (s) => `${ADJ[parseInt(s.slice(0, 4), 16) % ADJ.length]} ${NOUN[parseInt(s.slice(4, 8), 16) % NOUN.length]}`;
+const seedOf = (p) => p.avatar || String(p.id).padStart(12, "0");
+
+let anon = localStorage.getItem("anon");
+if (!anon) { anon = crypto.randomUUID(); localStorage.setItem("anon", anon); }
+let shuffleN = Number(localStorage.getItem("shuffle") || 0);
+let mySeed = "000000000000";
+
+// Same person keeps one avatar per feed cycle; it changes at reset or on shuffle.
+async function computeSeed() {
+  const data = new TextEncoder().encode(`${anon}|${shuffleN}|${resetAt ?? 0}`);
+  const h = new Uint8Array(await crypto.subtle.digest("SHA-256", data));
+  mySeed = [...h].map((b) => b.toString(16).padStart(2, "0")).join("").slice(0, 12);
+  $("me-avatar").src = avatarUri(mySeed);
+  $("me-name").textContent = nameFor(mySeed);
+}
+$("shuffle").addEventListener("click", () => {
+  shuffleN++; localStorage.setItem("shuffle", shuffleN); computeSeed();
+});
+
+let skew = 0, resetAt = null, seen = new Set(), first = true;
+const openThreads = new Set();
+const now = () => Date.now() + skew;
+const pad = (n) => String(n).padStart(2, "0");
+
+function tick() {
+  if (!resetAt) return;
+  let left = resetAt - now();
+  if (left <= 0) { left = 0; load(); }
+  const h = Math.floor(left / 3600000), m = Math.floor(left / 60000) % 60, s = Math.floor(left / 1000) % 60;
+  $("clock").textContent = `${pad(h)}:${pad(m)}:${pad(s)}`;
+  $("nav-clock").textContent = `Resets in ${h}h ${pad(m)}m`;
+}
+setInterval(tick, 1000);
+
+function ago(ts) {
+  const m = Math.round((ts - now()) / 60000);
+  if (Math.abs(m) < 1) return "now";
+  if (Math.abs(m) < 60) return rtf.format(m, "minute");
+  return rtf.format(Math.round(m / 60), "hour");
+}
+
+function render(p) {
+  const seed = seedOf(p);
+  const li = document.createElement("li");
+  li.className = "post" + (!first && !seen.has(p.id) ? " enter" : "");
+  const img = new Image(40, 40); img.alt = ""; img.src = avatarUri(seed);
+  const box = document.createElement("div");
+  const who = document.createElement("div"); who.className = "who";
+  const b = document.createElement("b"); b.textContent = nameFor(seed);
+  const t = document.createElement("time"); t.dateTime = new Date(p.created_at).toISOString(); t.textContent = ago(p.created_at);
+  who.append(b, t);
+  const text = document.createElement("p"); text.textContent = p.body; // never innerHTML user input
+  // actions: me too + replies
+  const acts = document.createElement("div"); acts.className = "actions";
+  const mt = document.createElement("button"); mt.type = "button"; mt.className = "act" + (p.mine ? " on" : "");
+  const setMt = (count, mine) => { mt.classList.toggle("on", mine); mt.setAttribute("aria-pressed", mine); mt.textContent = count ? `Me too · ${count}` : "Me too"; mt.dataset.count = count; mt.dataset.mine = mine ? "1" : ""; };
+  setMt(p.metoo || 0, p.mine);
+  mt.addEventListener("click", async () => {
+    const was = !!mt.dataset.mine, c = Number(mt.dataset.count);
+    setMt(Math.max(0, c + (was ? -1 : 1)), !was); // optimistic
+    try {
+      const res = await fetch("/api/metoo", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ id: p.id }) });
+      const data = await res.json();
+      if (!res.ok) throw new Error();
+      setMt(data.count, data.mine);
+    } catch { setMt(c, was); }
+  });
+  const n = p.replies.length;
+  const rb = document.createElement("button"); rb.type = "button"; rb.className = "act";
+  rb.textContent = n ? `${n} ${n === 1 ? "reply" : "replies"}` : "Reply";
+  acts.append(mt, rb);
+
+  const thread = document.createElement("div"); thread.className = "thread"; thread.hidden = !openThreads.has(p.id);
+  for (const r of p.replies) {
+    const rs = seedOf(r), row = document.createElement("div"); row.className = "reply";
+    const ri = new Image(26, 26); ri.alt = ""; ri.src = avatarUri(rs);
+    const rbx = document.createElement("div");
+    const rw = document.createElement("div"); rw.className = "who";
+    const rn = document.createElement("b"); rn.textContent = nameFor(rs);
+    const rt = document.createElement("time"); rt.dateTime = new Date(r.created_at).toISOString(); rt.textContent = ago(r.created_at);
+    rw.append(rn, rt);
+    const rp = document.createElement("p"); rp.textContent = r.body;
+    rbx.append(rw, rp); row.append(ri, rbx); thread.append(row);
+  }
+  const form = document.createElement("form"); form.className = "reply-form";
+  const inp = document.createElement("input"); inp.maxLength = 280; inp.placeholder = "Reply anonymously"; inp.setAttribute("aria-label", "Reply");
+  const hp = document.createElement("input"); hp.name = "website"; hp.tabIndex = -1; hp.autocomplete = "off"; hp.className = "hp"; hp.setAttribute("aria-hidden", "true");
+  const sb = document.createElement("button"); sb.textContent = "Reply"; sb.disabled = true;
+  inp.addEventListener("input", () => { sb.disabled = inp.value.trim().length < 2; });
+  const rm = document.createElement("p"); rm.className = "reply-msg"; rm.setAttribute("role", "status");
+  form.append(inp, hp, sb);
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault(); sb.disabled = true; rm.textContent = "";
+    try {
+      const res = await fetch("/api/replies", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ post_id: p.id, body: inp.value, website: hp.value, avatar: mySeed }) });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Couldn't reply.");
+      inp.value = ""; await load(true);
+    } catch (err) { rm.textContent = err.message; sb.disabled = false; }
+  });
+  thread.append(form, rm);
+  rb.addEventListener("click", () => {
+    thread.hidden = !thread.hidden;
+    thread.hidden ? openThreads.delete(p.id) : openThreads.add(p.id);
+    if (!thread.hidden) inp.focus();
+  });
+  box.append(who, text, acts, thread);
+  li.append(img, box);
+  return li;
+}
+
+async function load(force = false) {
+  try {
+    const { posts, now: srv, resetAt: r } = await (await fetch("/api/posts")).json();
+    skew = srv - Date.now();
+    if (r !== resetAt) {
+      resetAt = r; computeSeed();
+      const at = new Intl.DateTimeFormat(undefined, { hour: "numeric", minute: "2-digit", timeZoneName: "short" }).format(r);
+      $("clock-cap").textContent = `until the feed resets at ${at}`;
+    }
+    tick();
+    // Don't wipe a reply someone is typing on the background refresh
+    const typing = [...document.querySelectorAll(".reply-form input:not(.hp)")].some((i) => i.value || i === document.activeElement);
+    if (typing && !force) return;
+    $("list").replaceChildren(...posts.map(render));
+    posts.forEach((p) => seen.add(p.id));
+    first = false;
+    $("empty").hidden = posts.length > 0;
+    $("cap").textContent = posts.length ? `${posts.length} ${posts.length === 1 ? "person" : "people"} couldn't sleep.` : "\u00a0";
+  } catch { /* keep last render */ }
+}
+
+const body = $("body");
+body.addEventListener("input", () => {
+  const n = body.value.trim().length;
+  $("count").textContent = body.value.length > 400 ? 500 - body.value.length : "";
+  $("post-btn").disabled = n < 3;
+});
+
+$("post-form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const btn = $("post-btn"), msg = $("post-msg");
+  btn.disabled = true; msg.textContent = ""; msg.classList.remove("err");
+  const fd = new FormData(e.target);
+  try {
+    const res = await fetch("/api/posts", {
+      method: "POST", headers: { "content-type": "application/json" },
+      body: JSON.stringify({ body: fd.get("body"), website: fd.get("website"), avatar: mySeed }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Couldn't post.");
+    e.target.reset(); $("count").textContent = "";
+    msg.textContent = "Posted. You're not the only one.";
+    await load();
+    $("list").firstElementChild?.scrollIntoView({ behavior: "smooth", block: "center" });
+  } catch (err) {
+    msg.textContent = err.message; msg.classList.add("err"); btn.disabled = false;
+  }
+});
+
+load();
+setInterval(load, 20000);
+</script>
+</body>
+</html>

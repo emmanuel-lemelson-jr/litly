@@ -1,0 +1,24 @@
+{
+  "name": "zealous-bohr",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build": "esbuild src/avatars.js --bundle --minify --format=iife --outfile=public/avatars.js",
+    "db:local": "npx wrangler d1 execute cant-sleep --local --file=schema.sql",
+    "dev": "npm run build && npm run db:local && npx wrangler dev --port 8799",
+    "deploy": "npm run build && npx wrangler deploy"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "@dicebear/collection": "^9.4.2",
+    "@dicebear/core": "^9.4.3"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.2",
+    "wrangler": "^4"
+  }
+}
