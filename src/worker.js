@@ -228,7 +228,7 @@ async function profile(request, env, url) {
     }
     p = { username, avatar };
   }
-  return json({ name: user.name, username: p.username, avatar: p.avatar });
+  return json({ username: p.username, avatar: p.avatar });
 }
 
 // Identify the real file type from its first bytes instead of trusting what the browser says.

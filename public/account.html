@@ -21,21 +21,20 @@
     h1 { font-size:clamp(32px,6vw,44px); line-height:1.1; letter-spacing:-.02em; margin:0 0 28px; }
     .card { background:var(--tile); border-radius:20px; padding:24px; }
     .top { display:flex; align-items:center; gap:18px; }
-    .top img { width:88px; height:88px; border-radius:50%; flex:none; }
     .top .u { font-size:24px; font-weight:600; letter-spacing:-.015em; overflow-wrap:anywhere; }
-    .top .n { color:var(--muted); font-size:15px; }
-    .row { margin-top:26px; }
+        .row { margin-top:26px; }
     label, .lbl { display:block; font-size:13px; color:var(--muted); margin:0 0 8px; }
     input[type=text] { width:100%; background:#1c1c1e; border:1px solid var(--hair); color:var(--text); border-radius:12px; padding:12px 14px; font:17px var(--font); letter-spacing:-.02em; outline:0; }
     input[type=text]:focus-visible { border-color:var(--accent); }
     .help { color:#6e6e73; font-size:13px; margin:6px 0 0; }
     .readonly { background:#1c1c1e; border-radius:12px; padding:12px 14px; color:var(--text); overflow-wrap:anywhere; }
-    .picker { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; }
-    .picker button { border:2px solid transparent; background:#1c1c1e; border-radius:50%; padding:0; aspect-ratio:1; cursor:pointer; overflow:hidden; transition:border-color .15s, transform .1s; }
-    .picker button:hover { transform:scale(1.04); }
-    .picker button[aria-pressed=true] { border-color:var(--accent); }
-    .picker button:focus-visible { outline:2px solid var(--link); outline-offset:2px; }
-    .picker img { width:100%; height:100%; display:block; }
+    .avatar-wrap { position:relative; flex:none; width:88px; height:88px; }
+    .avatar-wrap img { width:100%; height:100%; display:block; border-radius:50%; }
+    .shuffle { position:absolute; right:-4px; bottom:-4px; width:34px; height:34px; border-radius:50%; border:3px solid var(--tile); background:#2c2c2e; color:var(--text); display:grid; place-items:center; padding:0; cursor:pointer; transition:background-color .15s, transform .25s; }
+    .shuffle:hover { background:#3a3a3c; }
+    .shuffle:active { transform:rotate(180deg); }
+    .shuffle:focus-visible { outline:2px solid var(--link); outline-offset:2px; }
+    .shuffle svg { width:16px; height:16px; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
     .link { background:none; border:0; color:var(--link); font:15px var(--font); padding:10px 0 0; cursor:pointer; }
     .link:hover { text-decoration:underline; }
     .actions { display:flex; align-items:center; gap:14px; margin-top:28px; }
@@ -47,6 +46,7 @@
     .msg { font-size:14px; color:var(--muted); min-height:20px; }
     .msg.err { color:var(--err); }
     .signout { margin-top:20px; }
+    @media (max-width:520px) { main { padding:24px 16px 64px; } .card { padding:20px 18px; border-radius:18px; } .top { gap:16px; } .actions .btn { flex:1; } }
     @media (prefers-reduced-motion: reduce) { * { transition:none !important; } }
   </style>
 </head>
@@ -59,26 +59,17 @@
   <p id="viewp" hidden style="margin:-14px 0 24px"><a href="#" id="view" style="color:var(--link)">View your profile and posts</a></p>
   <section class="card" id="card" hidden>
     <div class="top">
-      <img id="big" alt="" width="88" height="88">
-      <div><div class="u" id="show-user"></div><div class="n">Only you can see your name</div></div>
-    </div>
-
-    <div class="row">
-      <div class="lbl">Profile picture</div>
-      <div class="picker" id="picker" role="group" aria-label="Choose a profile picture"></div>
-      <button type="button" class="link" id="more">Show me more</button>
+      <div class="avatar-wrap">
+        <img id="big" alt="" width="88" height="88">
+        <button type="button" class="shuffle" id="shuffle" aria-label="Shuffle profile picture" title="Shuffle"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 3h5v5M4 20 21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></svg></button>
+      </div>
+      <div class="u" id="show-user"></div>
     </div>
 
     <div class="row">
       <label for="username">Username</label>
       <input type="text" id="username" maxlength="20" autocomplete="off" autocapitalize="none" spellcheck="false">
       <p class="help">3-20 letters, numbers or underscores.</p>
-    </div>
-
-    <div class="row">
-      <div class="lbl">Name</div>
-      <div class="readonly" id="name"></div>
-      <p class="help">From your Google or Apple account. It's never shown on posts.</p>
     </div>
 
     <div class="actions">
@@ -101,27 +92,14 @@ function dirty() {
 function setAvatar(seed) {
   avatar = seed;
   $("big").src = avatarUri(seed);
-  for (const b of $("picker").children) b.setAttribute("aria-pressed", b.dataset.seed === seed);
   dirty();
-}
-function fillPicker(keep) {
-  const seeds = [keep, ...Array.from({ length: 7 }, rand)];
-  $("picker").replaceChildren(...seeds.map((seed, i) => {
-    const b = document.createElement("button"); b.type = "button"; b.dataset.seed = seed;
-    b.setAttribute("aria-label", `Avatar option ${i + 1}`); b.setAttribute("aria-pressed", seed === avatar);
-    const img = new Image(); img.alt = ""; img.src = avatarUri(seed); b.append(img);
-    b.addEventListener("click", () => setAvatar(seed));
-    return b;
-  }));
 }
 function show(p) {
   saved = { username: p.username, avatar: p.avatar };
   try { localStorage.setItem("litly_me", JSON.stringify({ username: p.username, avatar: p.avatar, src: avatarUri(p.avatar) })); } catch {}
   $("show-user").textContent = p.username; $("view").href = "/u/" + p.username;
   $("username").value = p.username;
-  $("name").textContent = p.name || "";
   avatar = p.avatar; $("big").src = avatarUri(p.avatar);
-  fillPicker(p.avatar);
   dirty();
 }
 
@@ -135,7 +113,7 @@ fetch("/api/profile").then((r) => {
   $("view").href = "/u/" + p.username; $("viewp").hidden = false;
 }).catch(() => { $("msg").textContent = "Couldn't load your account."; });
 
-$("more").addEventListener("click", () => fillPicker(avatar));
+$("shuffle").addEventListener("click", () => { $("msg").textContent = ""; setAvatar(rand()); });
 $("username").addEventListener("input", () => { $("msg").textContent = ""; $("msg").className = "msg"; dirty(); });
 
 $("save").addEventListener("click", async () => {

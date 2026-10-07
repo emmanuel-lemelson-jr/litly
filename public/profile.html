@@ -53,6 +53,16 @@
     .state p { color: var(--muted); margin: 0 auto 26px; }
     .state a { display: inline-block; background: var(--accent); color: var(--accent-ink); font-weight: 500; text-decoration: none; padding: 10px 22px; border-radius: 980px; }
     [hidden] { display: none !important; }
+    @media (max-width: 520px) {
+      main { padding: 16px 16px 100px; }
+      .head { flex-wrap: wrap; gap: 14px; }
+      .head img { width: 72px; height: 72px; }
+      .head h1 { font-size: 24px; }
+      .head > div { min-width: 0; flex: 1; }
+      .settings { margin-left: 0; width: 100%; text-align: center; padding: 10px 16px; }
+      .tabs { gap: 0; }
+      .tab { flex: 1; padding: 12px 8px; }
+    }
     @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
   </style>
 </head>
