@@ -183,7 +183,7 @@
   <section class="composer">
     <form id="post-form" class="box">
       <label for="body" class="hp">Your post</label>
-      <textarea id="body" name="body" rows="1" maxlength="500" placeholder="Last night I couldn't sleep because…" required></textarea>
+      <textarea id="body" name="body" rows="1" maxlength="500" placeholder="Up late because…" required></textarea>
       <div class="hp" aria-hidden="true"><input name="website" tabindex="-1" autocomplete="off"></div>
       <div class="bar">
         <div class="me"><img id="me-avatar" alt="" width="28" height="28"><span id="me-name"></span><button type="button" class="shuffle" id="shuffle" aria-label="Shuffle avatar" title="Shuffle avatar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 3h5v5"/><path d="M4 20 21 3"/><path d="M21 16v5h-5"/><path d="M15 15l6 6"/><path d="M4 4l5 5"/></svg></button></div>
@@ -353,16 +353,16 @@ function adjustHeight() {
   body.style.height = Math.min(body.scrollHeight, 260) + "px";
 }
 
-const PREFIX = "Last night I couldn't sleep because ";
+const PREFIX = "Up late because ";
 const PHRASES = [
-  "my mind wouldn't shut off…",
-  "I had an idea I couldn't stop thinking about…",
-  "I kept replaying a conversation from 2019…",
-  "I drank coffee way too late…",
-  "I was stressing over things I can't control…",
-  "I was wondering where all the time went…",
-  "the room was too warm and pillows were hot…",
-  "tomorrow has too much going on…"
+  "my brain won't stop…",
+  "too much coffee…",
+  "replaying 2019…",
+  "a sudden 2 AM idea…",
+  "overthinking everything…",
+  "worrying about tomorrow…",
+  "warm pillows…",
+  "I can't shut off…"
 ];
 
 let phraseIdx = 0;
@@ -374,7 +374,7 @@ let isPaused = false;
 function stepTyping() {
   if (isPaused || body.value.length > 0) return;
   if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-    body.placeholder = "Last night I couldn't sleep because…";
+    body.placeholder = "Up late because…";
     return;
   }
 
