@@ -175,13 +175,11 @@ const U_NOUN = ["owl", "moth", "fox", "comet", "moon", "firefly", "cat", "star",
 const RESERVED_NAMES = /^(admin|administrator|litly|moderator|mod|support|staff|official|help|root|system)$/;
 const pick = (a) => a[crypto.getRandomValues(new Uint32Array(1))[0] % a.length];
 const randomSeed = () => [...crypto.getRandomValues(new Uint8Array(6))].map((b) => b.toString(16).padStart(2, "0")).join("");
-// Keep names short and memorable (e.g. "sleepy_fox"). Digits are only added when the
-// plain name is taken, and get longer as more people sign up and collisions pile up.
-const randomUsername = (attempt) => {
-  const base = `${pick(U_ADJ)}_${pick(U_NOUN)}`;
-  if (attempt < 8) return base;
-  const digits = attempt < 14 ? 2 : 3; // longest base is 17 chars; the 20-char username limit leaves room for 3 digits
-  return `${base}${crypto.getRandomValues(new Uint32Array(1))[0] % 10 ** digits}`;
+// Always "adjective_noun_1234". The base is kept to 15 chars so the name fits the 20-char username limit.
+const randomUsername = () => {
+  let base;
+  do base = `${pick(U_ADJ)}_${pick(U_NOUN)}`; while (base.length > 15);
+  return `${base}_${String(crypto.getRandomValues(new Uint32Array(1))[0] % 10000).padStart(4, "0")}`;
 };
 
 async function sessionUser(request, env, origin) {
@@ -196,7 +194,7 @@ async function getOrCreateProfile(env, user) {
   const existing = await find();
   if (existing) return existing;
   for (let i = 0; i < 24; i++) {
-    const username = randomUsername(i), avatar = randomSeed();
+    const username = randomUsername(), avatar = randomSeed();
     try {
       await env.DB.prepare("INSERT INTO profiles (user_id, username, avatar, created_at) VALUES (?, ?, ?, ?)")
         .bind(user.id, username, avatar, Date.now())
