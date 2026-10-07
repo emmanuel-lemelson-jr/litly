@@ -82,12 +82,10 @@
 
     @media (max-width: 860px) {
       .page { grid-template-columns: 1fr; }
-      .left { padding: 20px 22px 0; }
-      .form { margin: 0; padding: 28px 0 8px; max-width: none; }
-      .right { padding: 8px 22px 0; }
-      .lane { min-height: 320px; flex: none; }
-      .mascot { width: 220px; }
-      footer { padding-bottom: 20px; }
+      .right { display: none; }
+      .left { padding: 20px 22px 0; min-height: 100vh; }
+      .form { margin: auto; padding: 28px 0; max-width: 420px; text-align: center; }
+      footer { padding-bottom: 20px; text-align: center; }
     }
     @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } .lane { overflow-y: auto; } }
   </style>
@@ -208,8 +206,6 @@ document.querySelectorAll(".sso button").forEach((b) =>
     }
   })
 );
-
-fetch("/api/auth/get-session").then((r) => r.json()).then((m) => { if (m && m.session) location.replace("/"); }).catch(() => {});
 </script>
 </body>
 </html>
