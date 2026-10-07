@@ -84,9 +84,15 @@ let data = null, me = null, tab = "posts";
 const now = () => Date.now();
 
 $("back").addEventListener("click", () => {
-  let same = false;
-  try { same = document.referrer && new URL(document.referrer).origin === location.origin; } catch {}
-  same && history.length > 1 ? history.back() : (location.href = "/");
+  let same = false, fromAccount = false;
+  try {
+    const ref = document.referrer && new URL(document.referrer);
+    same = !!ref && ref.origin === location.origin;
+    fromAccount = same && /^\/account\/?$/.test(ref.pathname);
+  } catch {}
+  // Skip the edit-profile page if that's where we just came from.
+  if (fromAccount) history.length > 2 ? history.go(-2) : (location.href = "/");
+  else same && history.length > 1 ? history.back() : (location.href = "/");
 });
 
 function notFound() {
