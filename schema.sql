@@ -6,7 +6,7 @@ CREATE TABLE IF NOT EXISTS posts (
   reports INTEGER NOT NULL DEFAULT 0,
   hidden INTEGER NOT NULL DEFAULT 0,
   created_at INTEGER NOT NULL,
-  user_id TEXT,        -- author's account (NULL on posts made before sign-in was required)
+  user_id TEXT,        -- author's account
   image TEXT,          -- R2 key of the attached photo, if any
   image_w INTEGER,
   image_h INTEGER

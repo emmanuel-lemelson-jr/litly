@@ -123,13 +123,12 @@
 <script>
 const $ = (id) => document.getElementById(id);
 function card(p, serverNow) {
-  const seed = seedOf(p);
   const li = document.createElement("li");
   li.className = "card";
-  const img = new Image(40, 40); img.alt = ""; img.src = avatarUri(seed);
+  const img = new Image(40, 40); img.alt = ""; img.src = avatarUri(p.avatar);
   const box = document.createElement("div");
   const who = document.createElement("div"); who.className = "who";
-  const b = document.createElement("b"); b.textContent = p.username || nameFor(seed);
+  const b = document.createElement("b"); b.textContent = p.username;
   const t = document.createElement("time"); t.textContent = ago(p.created_at, serverNow);
   who.append(b, t);
   const text = document.createElement("p"); text.textContent = p.body;

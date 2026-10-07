@@ -174,7 +174,6 @@ function replyForm(parentId, { placeholder, onDone, autofocus }) {
 }
 
 function renderNode(r, kidsOf, depth, container, isChild, isLast) {
-  const seed = seedOf(r);
   const dead = r.deleted;
   const el = document.createElement("div"); el.className = "rep" + (isChild ? " child" : "") + (isLast ? " last" : ""); el.id = `r${r.id}`;
   const kids = kidsOf.get(r.id) || [];
@@ -214,7 +213,7 @@ function renderNode(r, kidsOf, depth, container, isChild, isLast) {
   const slot = document.createElement("div"); slot.className = "inline-form";
   rb.addEventListener("click", () => {
     if (slot.firstChild) { slot.replaceChildren(); return; }
-    slot.replaceChildren(replyForm(r.id, { placeholder: `Reply to ${nameFor(seed)}`, autofocus: true, onDone: (id) => refresh(id) }));
+    slot.replaceChildren(replyForm(r.id, { placeholder: `Reply to ${r.username}`, autofocus: true, onDone: (id) => refresh(id) }));
   });
   acts.append(cb);
   if (!dead) {
@@ -256,7 +255,6 @@ function buildTree(replies, excludeId) {
 
 function draw(highlightId) {
   const { post, replies } = data;
-  const seed = seedOf(post);
   const main = $("content");
   const kidsOf = buildTree(replies);
   const frag = document.createDocumentFragment();

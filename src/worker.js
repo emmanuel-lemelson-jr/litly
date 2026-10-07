@@ -33,7 +33,7 @@ async function hashIp(request, env) {
   return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, "0")).join("").slice(0, 32);
 }
 
-// Anonymous posting attracts abuse. These filters keep scams, doxxing and
+// Open posting attracts abuse. These filters keep scams, doxxing and
 // "contact me" spam off the domain, which is what gets domains flagged.
 const TLDS = "com|net|org|io|co|me|ly|app|dev|xyz|ru|cn|top|info|biz|link|site|online|shop|club|live|cc|tv|gg|lol";
 const SCAM_WORDS = /\b(telegram|whatsapp|t\.me|cash\s?app|venmo|zelle|paypal|bitcoin|btc|ethereum|crypto|onlyfans|snapchat|snap\s?me|dm me|text me|call me|add me|forex|investment|giveaway)\b/i;
@@ -64,7 +64,7 @@ async function readBody(request) {
 // Author fields come from the account's public profile (username + avatar), so a change on
 // /account shows up on everything they've posted. Old posts without an account have neither.
 const POST_COLS = `p.id, p.body, p.created_at, p.image, p.image_w, p.image_h, pr.username,
-       COALESCE(pr.avatar, p.avatar) AS avatar,
+       pr.avatar,
        (SELECT COUNT(*) FROM metoos m WHERE m.post_id = p.id) AS metoo,
        (SELECT COUNT(*) FROM replies r WHERE r.post_id = p.id) AS replies`;
 const POST_JOIN = "FROM posts p LEFT JOIN profiles pr ON pr.user_id = p.user_id";
@@ -96,27 +96,27 @@ async function getPost(request, env, url) {
   const { next } = cycle(now);
   const ipHash = await hashIp(request, env);
   const post = await env.DB.prepare(
-    `SELECT ${POST_COLS}, p.ip_hash, ${heartedByMe}
+    `SELECT ${POST_COLS}, p.user_id, ${heartedByMe}
      ${POST_JOIN} WHERE p.id = ? AND p.hidden = 0`
   )
     .bind(ipHash, id)
     .first();
   if (!post) return json({ error: "Gone", gone: true }, 404);
   post.mine = !!post.mine;
-  const opHash = post.ip_hash;
-  delete post.ip_hash;
+  const opUser = post.user_id;
+  delete post.user_id;
   const { results: replies } = await env.DB.prepare(
     `SELECT r.id, r.parent_id, r.created_at, r.deleted,
        CASE WHEN r.deleted THEN '[deleted]' ELSE r.body END AS body,
        CASE WHEN r.deleted THEN NULL ELSE pr.username END AS username,
-       CASE WHEN r.deleted THEN NULL ELSE COALESCE(pr.avatar, r.avatar) END AS avatar,
+       CASE WHEN r.deleted THEN NULL ELSE pr.avatar END AS avatar,
        (SELECT COUNT(*) FROM reply_metoos m WHERE m.reply_id = r.id) AS metoo,
        EXISTS(SELECT 1 FROM reply_metoos m WHERE m.reply_id = r.id AND m.ip_hash = ?) AS mine,
-       r.ip_hash = ? AS op
+       (? IS NOT NULL AND r.user_id = ?) AS op
      FROM replies r LEFT JOIN profiles pr ON pr.user_id = r.user_id
      WHERE r.post_id = ? ORDER BY r.created_at ASC LIMIT 1000`
   )
-    .bind(ipHash, opHash, id)
+    .bind(ipHash, opUser, opUser, id)
     .all();
   for (const r of replies) { r.mine = !!r.mine; r.op = !!r.op && !r.deleted; r.deleted = !!r.deleted; }
   return json({ post, replies, now, resetAt: next });
@@ -156,7 +156,7 @@ async function topPosts(env) {
   const now = Date.now();
   const { start, next } = cycle(now);
   const { results } = await env.DB.prepare(
-    `SELECT p.id, SUBSTR(p.body, 1, 180) AS body, p.created_at, pr.username, COALESCE(pr.avatar, p.avatar) AS avatar,
+    `SELECT p.id, SUBSTR(p.body, 1, 180) AS body, p.created_at, pr.username, pr.avatar,
        (SELECT COUNT(*) FROM replies r WHERE r.post_id = p.id) AS replies,
        (SELECT COUNT(*) FROM metoos m WHERE m.post_id = p.id) AS metoo
      FROM posts p LEFT JOIN profiles pr ON pr.user_id = p.user_id WHERE p.created_at >= ? AND p.hidden = 0

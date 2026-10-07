@@ -1,11 +1,5 @@
 // Helpers shared by the feed (index.html) and the single-post page (post.html).
-const ADJ = ["Restless","Wired","Sleepless","Quiet","Wandering","Drifting","Midnight","Hazy","Wide-eyed","Lingering"];
-const NOUN = ["Owl","Moth","Fox","Comet","Moon","Firefly","Cat","Star","Raccoon","Lantern"];
-const nameFor = (s) => `${ADJ[parseInt(s.slice(0, 4), 16) % ADJ.length]} ${NOUN[parseInt(s.slice(4, 8), 16) % NOUN.length]}`;
-const seedOf = (p) => p.avatar || String(p.id).padStart(12, "0");
-// Posts made after sign-in was required show the account's username (linking to its profile); older ones keep the made-up name.
-const authorName = (p) => p.username || nameFor(seedOf(p));
-const profileHref = (p) => (p.username ? `/u/${p.username}` : null);
+const profileHref = (p) => `/u/${p.username}`;
 
 const rtf = new Intl.RelativeTimeFormat(undefined, { numeric: "auto" });
 function ago(ts, nowMs) {
@@ -86,16 +80,12 @@ async function deleteMine(kind, id) {
 
 // Little avatar that links to the author's profile when they have one.
 function avatarEl(item, size) {
-  const img = new Image(size, size); img.alt = ""; img.src = avatarUri(seedOf(item));
-  const href = profileHref(item);
-  if (!href) return img;
-  const a = document.createElement("a"); a.href = href; a.setAttribute("aria-label", `${item.username}'s profile`); a.append(img);
+  const img = new Image(size, size); img.alt = ""; img.src = avatarUri(item.avatar);
+  const a = document.createElement("a"); a.href = profileHref(item); a.setAttribute("aria-label", `${item.username}'s profile`); a.append(img);
   return a;
 }
 function nameEl(item) {
-  const href = profileHref(item);
-  const el = document.createElement(href ? "a" : "b"); el.textContent = authorName(item);
-  if (href) el.href = href;
+  const el = document.createElement("a"); el.textContent = item.username; el.href = profileHref(item);
   return el;
 }
 
