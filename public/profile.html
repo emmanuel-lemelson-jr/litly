@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Litly</title>
+  <meta name="robots" content="noindex">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=2">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png?v=2">
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png?v=2">
+  <meta name="color-scheme" content="dark">
+  <meta name="theme-color" content="#000000">
+  <link rel="stylesheet" href="/nav.css">
+  <link rel="stylesheet" href="/pills.css">
+  <style>
+    :root {
+      --bg: #000; --tile: #161617; --text: #f5f5f7; --muted: #86868b; --hair: #2a2a2c;
+      --accent: #869ad5; --accent-hover: #9bb0ed; --accent-ink: #060913; --link: #9bb0ed; --err: #ff453a;
+      --font: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    }
+    * { box-sizing: border-box; }
+    html { -webkit-text-size-adjust: 100%; }
+    body { margin: 0; background: var(--bg); color: var(--text); font: 17px/1.47 var(--font); letter-spacing: -.022em; -webkit-font-smoothing: antialiased; }
+    main { max-width: 680px; margin: 0 auto; padding: 22px 22px 120px; }
+    .back { display: inline-flex; align-items: center; gap: 4px; border: 0; background: none; color: var(--text); font: 500 16px var(--font); letter-spacing: -.01em; padding: 6px 12px 6px 4px; margin: 0 0 14px -6px; border-radius: 980px; cursor: pointer; }
+    .back:hover { background: #1c1c1e; }
+    .back:focus-visible { outline: 2px solid var(--link); outline-offset: 2px; }
+    .back svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+    .head { display: flex; align-items: center; gap: 18px; margin: 6px 0 22px; }
+    .head img { width: 84px; height: 84px; border-radius: 50%; flex: none; }
+    .head h1 { font-size: 28px; line-height: 1.15; letter-spacing: -.02em; margin: 0; overflow-wrap: anywhere; }
+    .head p { margin: 2px 0 0; color: var(--muted); font-size: 15px; }
+    .settings { margin-left: auto; flex: none; background: #1f2023; color: var(--text); text-decoration: none; font: 600 14px var(--font); padding: 8px 16px; border-radius: 980px; }
+    .settings:hover { background: #2b2d31; }
+
+    .tabs { display: flex; gap: 6px; border-bottom: 1px solid var(--hair); margin-bottom: 4px; }
+    .tab { border: 0; background: none; color: var(--muted); font: 600 15px var(--font); letter-spacing: -.01em; padding: 10px 14px; cursor: pointer; position: relative; border-radius: 10px 10px 0 0; }
+    .tab:hover { color: var(--text); }
+    .tab[aria-selected=true] { color: var(--text); }
+    .tab[aria-selected=true]::after { content: ""; position: absolute; left: 10px; right: 10px; bottom: -1px; height: 2px; background: var(--accent); border-radius: 2px; }
+    .tab:focus-visible { outline: 2px solid var(--link); outline-offset: -2px; }
+    .tab span { color: #6e6e73; font-weight: 500; margin-left: 4px; }
+
+    .rep-item { padding: 16px 0; border-top: 1px solid var(--hair); }
+    .rep-item:first-child { border-top: 0; }
+    .rep-item .on { font-size: 13px; color: var(--muted); margin: 0 0 4px; }
+    .rep-item .on a { color: var(--text); text-decoration: none; font-weight: 600; }
+    .rep-item .on a:hover { text-decoration: underline; }
+    .rep-item p.body { margin: 0; font-size: 17px; line-height: 1.42; white-space: pre-wrap; overflow-wrap: anywhere; }
+    .state { text-align: center; padding: 90px 8px; }
+    .state h1 { font-size: 28px; margin: 0 0 10px; letter-spacing: -.02em; }
+    .state p { color: var(--muted); margin: 0 auto 26px; }
+    .state a { display: inline-block; background: var(--accent); color: var(--accent-ink); font-weight: 500; text-decoration: none; padding: 10px 22px; border-radius: 980px; }
+    [hidden] { display: none !important; }
+    @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+  </style>
+</head>
+<body>
+<nav><div class="in"><a href="/" class="nav-logo" aria-label="Litly"><img src="/logo.svg" alt="Litly" width="130" height="40"></a><div class="nav-auth" id="nav-auth"><a class="nav-btn" href="/signup">Log in</a></div></div></nav>
+<script src="/nav.js"></script>
+
+<main>
+  <button class="back" id="back" type="button" aria-label="Back"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>Back</button>
+  <div id="content" aria-live="polite"></div>
+</main>
+
+<script src="/avatars.js"></script>
+<script src="/common.js"></script>
+<script>
+const $ = (id) => document.getElementById(id);
+const name = decodeURIComponent(location.pathname.split("/")[2] || "");
+let data = null, me = null, tab = "posts";
+const now = () => Date.now();
+
+$("back").addEventListener("click", () => {
+  let same = false;
+  try { same = document.referrer && new URL(document.referrer).origin === location.origin; } catch {}
+  same && history.length > 1 ? history.back() : (location.href = "/");
+});
+
+function notFound() {
+  document.title = "Not found · Litly";
+  $("content").innerHTML = '<div class="state"><h1>No one here.</h1><p>That profile doesn\'t exist.</p><a href="/">Back to the feed</a></div>';
+}
+
+function replyItem(r, mine) {
+  const li = document.createElement("li"); li.className = "rep-item";
+  const on = document.createElement("p"); on.className = "on";
+  const a = document.createElement("a"); a.href = `/p/${r.post_id}?r=${r.id}`; a.textContent = r.post_body || "a photo";
+  const t = document.createElement("time"); t.dateTime = new Date(r.created_at).toISOString(); t.textContent = ago(r.created_at, now());
+  on.append("Replied to ", a, " · ", t);
+  const body = document.createElement("p"); body.className = "body"; body.textContent = r.body;
+  const acts = document.createElement("div"); acts.className = "pills";
+  acts.append(heartPill(r, true, true), sharePill(`/p/${r.post_id}?r=${r.id}`, true));
+  if (mine) {
+    const d = pill("trash", "Delete", true); d.classList.add("del");
+    d.addEventListener("click", async () => { if (await deleteMine("reply", r.id)) { li.remove(); data.replies = data.replies.filter((x) => x.id !== r.id); draw(); } });
+    acts.append(d);
+  }
+  li.append(on, body, acts);
+  return li;
+}
+
+function draw() {
+  const { user, posts, replies } = data;
+  const mine = !!me && me.username === user.username;
+  const frag = document.createDocumentFragment();
+
+  const head = document.createElement("div"); head.className = "head";
+  const img = new Image(84, 84); img.alt = ""; img.src = avatarUri(user.avatar);
+  const who = document.createElement("div");
+  const h1 = document.createElement("h1"); h1.textContent = user.username;
+  const joined = document.createElement("p");
+  joined.textContent = "Joined " + new Intl.DateTimeFormat(undefined, { month: "long", year: "numeric" }).format(user.joined);
+  who.append(h1, joined);
+  head.append(img, who);
+  if (mine) { const s = document.createElement("a"); s.className = "settings"; s.href = "/account"; s.textContent = "Edit profile"; head.append(s); }
+  frag.append(head);
+
+  const tabs = document.createElement("div"); tabs.className = "tabs"; tabs.setAttribute("role", "tablist");
+  for (const [key, label, n] of [["posts", "Posts", posts.length], ["replies", "Replies", replies.length]]) {
+    const b = document.createElement("button"); b.type = "button"; b.className = "tab"; b.setAttribute("role", "tab"); b.setAttribute("aria-selected", tab === key);
+    b.append(label); const c = document.createElement("span"); c.textContent = n; b.append(c);
+    b.addEventListener("click", () => { tab = key; draw(); });
+    tabs.append(b);
+  }
+  frag.append(tabs);
+
+  const list = document.createElement("ul"); list.className = "plist";
+  if (tab === "posts") {
+    list.append(...posts.map((p) => postCard({ ...p, username: user.username, avatar: user.avatar }, { now: now(), me, onDelete: () => { data.posts = data.posts.filter((x) => x.id !== p.id); draw(); } })));
+  } else list.append(...replies.map((r) => replyItem(r, mine)));
+  if (!list.children.length) {
+    const e = document.createElement("p"); e.className = "empty";
+    e.textContent = tab === "posts" ? (mine ? "You haven't posted anything yet." : "No posts yet.") : (mine ? "You haven't replied to anything yet." : "No replies yet.");
+    frag.append(e);
+  } else frag.append(list);
+  $("content").replaceChildren(frag);
+}
+
+(async () => {
+  try {
+    const res = await fetch(`/api/user?name=${encodeURIComponent(name)}`);
+    if (res.status === 404) return notFound();
+    if (!res.ok) throw new Error();
+    data = await res.json();
+    me = (await litlyMe) || null;
+    document.title = `${data.user.username} · Litly`;
+    draw();
+  } catch { $("content").innerHTML = '<div class="state"><p>Couldn\'t load this. Try again in a moment.</p></div>'; }
+})();
+</script>
+</body>
+</html>

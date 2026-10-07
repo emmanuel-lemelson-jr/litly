@@ -1,0 +1,338 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Litly</title>
+  <meta name="robots" content="noindex">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=2">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png?v=2">
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png?v=2">
+  <meta name="color-scheme" content="dark">
+  <meta name="theme-color" content="#000000">
+  <link rel="stylesheet" href="/nav.css">
+  <link rel="stylesheet" href="/pills.css">
+  <style>
+    :root {
+      --bg: #000; --tile: #161617; --text: #f5f5f7; --muted: #86868b; --hair: #2a2a2c;
+      --accent: #869ad5; --accent-hover: #9bb0ed; --accent-ink: #060913; --link: #9bb0ed; --err: #ff453a;
+      --font: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    }
+    * { box-sizing: border-box; }
+    html { -webkit-text-size-adjust: 100%; }
+    body { margin: 0; background: var(--bg); color: var(--text); font: 17px/1.47 var(--font); letter-spacing: -.022em; -webkit-font-smoothing: antialiased; }
+    [hidden] { display: none !important; }
+    .hp { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+
+    .back { display: inline-flex; align-items: center; gap: 4px; border: 0; background: none; color: var(--text); font: 500 16px var(--font); letter-spacing: -.01em; padding: 6px 12px 6px 4px; margin: 0 0 14px -6px; border-radius: 980px; cursor: pointer; }
+    .back:hover { background: #1c1c1e; }
+    .back:focus-visible { outline: 2px solid var(--link); outline-offset: 2px; }
+    .back svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+    main { max-width: 680px; margin: 0 auto; padding: 22px 22px 120px; }
+
+    .post { display: grid; grid-template-columns: 44px 1fr; gap: 14px; }
+    .post img:not(.pimg) { width: 44px; height: 44px; border-radius: 50%; display: block; }
+    .who { display: flex; gap: 8px; align-items: baseline; font-size: 14px; color: var(--muted); }
+    .who b { color: var(--text); font-weight: 600; }
+    .post p { margin: 6px 0 0; font-size: 21px; line-height: 1.42; white-space: pre-wrap; overflow-wrap: anywhere; }
+
+    /* reply composer */
+    .rform { display: flex; gap: 8px; align-items: flex-end; }
+    .rform textarea { flex: 1; min-width: 0; background: var(--tile); color: var(--text); border: 0; border-radius: 20px; padding: 10px 16px; font: 16px/1.4 var(--font); letter-spacing: -.01em; outline: 0; resize: none; field-sizing: content; min-height: 42px; max-height: 200px; }
+    .rform textarea:focus-visible { outline: 2px solid var(--link); outline-offset: 1px; }
+    .rform textarea::placeholder { color: #6e6e73; }
+    .rform button { border: 0; background: var(--accent); color: var(--accent-ink); font: 500 15px var(--font); height: 42px; padding: 0 18px; border-radius: 980px; cursor: pointer; transition: background-color .2s; }
+    .rform button:hover:not(:disabled) { background: var(--accent-hover); }
+    .rform button:disabled { background: #2c2c2e; color: #6e6e73; cursor: default; }
+    .rmsg { color: var(--err); font-size: 13px; margin: 4px 4px 0; }
+    .top-form { margin: 18px 0 0; }
+
+    h2 { font-size: 15px; font-weight: 600; color: var(--muted); letter-spacing: 0; margin: 26px 0 4px; padding-top: 18px; border-top: 1px solid var(--hair); }
+
+    /* shared reply pinned above the thread */
+    .pinned { margin: 22px 0 0; padding: 12px 14px 6px; border-radius: 18px; background: rgba(134,154,213,.09); border: 1px solid rgba(134,154,213,.32); }
+    .pinned .label { font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--link); margin: 0 0 8px; }
+    .pinned .gone { color: var(--muted); font-size: 14px; margin: 0 0 8px; }
+
+    /* Nested replies, Reddit-style: each comment has an avatar header, text aligned under the name, and its
+       children indented by one avatar width. A thread line drops from the parent's avatar and every child
+       hooks into it with a curved elbow. Tap the line or the circled minus to collapse. */
+    :root { --av: 28px; --rail-w: 2px; }
+    .rep { --rail-up: var(--hair); position: relative; padding-top: 12px; }
+    .rhead { display: flex; align-items: center; gap: 8px; min-height: var(--av); font-size: 13px; color: var(--muted); }
+    .rhead img { width: var(--av); height: var(--av); border-radius: 50%; flex: none; }
+    .rhead b { color: var(--text); font-weight: 600; font-size: 14px; }
+    .ghost-av { width: var(--av); height: var(--av); border-radius: 50%; background: #1c1c1e; flex: none; }
+    .rep .rhead a { color: var(--text); font-weight: 600; font-size: 14px; text-decoration: none; }
+    .rep .rhead a:hover { text-decoration: underline; }
+    .rbody > p.dead { color: #6e6e73; font-style: italic; }
+    .op { color: var(--link); font-weight: 700; font-size: 12px; }
+    /* collapsed: the avatar is swapped for a circled plus, leaving just "plus  name · time" like Reddit */
+    .tog { display: none; width: var(--av); height: var(--av); flex: none; padding: 0; border: 0; border-radius: 50%; background: none; color: var(--text); cursor: pointer; place-items: center; }
+    .tog svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; }
+    .tog:hover { color: var(--accent); }
+    .tog:focus-visible { outline: 2px solid var(--link); outline-offset: 1px; }
+    .rep.collapsed > .rhead .tog { display: grid; }
+    .rep.collapsed > .rhead > :first-child { display: none; }
+    .rbody { position: relative; margin-left: calc(var(--av) + 8px); padding-top: 2px; min-width: 0; }
+    .rbody > p { margin: 0; font-size: 16px; line-height: 1.42; white-space: pre-wrap; overflow-wrap: anywhere; }
+    .ract { position: relative; display: flex; gap: 2px; margin: 4px 0 0 -10px; }
+    .cbtn { position: absolute; left: -22px; top: 6px; width: 18px; height: 18px; padding: 0; border: 0; border-radius: 50%; background: var(--bg); color: #8a8a90; cursor: pointer; display: grid; place-items: center; z-index: 1; }
+    .cbtn:hover { color: var(--accent); }
+    .cbtn:focus-visible { outline: 2px solid var(--link); outline-offset: 1px; }
+    .cbtn svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; }
+    /* the line under the parent's avatar (only drawn when it has replies) */
+    .rep.has-kids > .rbody::before { content: ""; position: absolute; left: calc(-1 * (var(--av) / 2 + 8px) - var(--rail-w) / 2); top: 0; bottom: 0; width: var(--rail-w); background: var(--rail, var(--hair)); }
+    .rail { position: absolute; left: 4px; top: calc(12px + var(--av)); bottom: 0; width: 20px; border: 0; padding: 0; background: none; cursor: pointer; }
+    .rail:focus-visible { outline: 2px solid var(--link); }
+    .rail:hover ~ .rbody { --rail: var(--accent); }
+    .rail:hover ~ .kids > .rep { --rail-up: var(--accent); }
+    /* children sit one avatar width in; each one hooks into the parent's line */
+    .kids { margin-left: var(--av); }
+    .rep.child::before { content: ""; position: absolute; left: calc(-1 * (var(--av) / 2) - var(--rail-w) / 2); top: 0; width: calc(var(--av) / 2 + var(--rail-w) / 2); height: calc(12px + var(--av) / 2); border-left: var(--rail-w) solid var(--rail-up); border-bottom: var(--rail-w) solid var(--rail-up); border-bottom-left-radius: 12px; pointer-events: none; }
+    .rep.child:not(.last)::after { content: ""; position: absolute; left: calc(-1 * (var(--av) / 2) - var(--rail-w) / 2); top: calc(12px + var(--av) / 2 - 4px); bottom: 0; width: var(--rail-w); background: var(--rail-up); pointer-events: none; }
+    .rep.collapsed > .rbody, .rep.collapsed > .kids, .rep.collapsed > .rail { display: none; }
+    .rep.flash > .rhead, .rep.flash > .rbody { animation: flash 1.6s ease-out; }
+    @keyframes flash { from { background: rgba(134,154,213,.22); } }
+    .inline-form { margin: 6px 0 4px; }
+    .inline-form:empty { margin: 0; }
+    .more { display: inline-block; margin: 8px 0 2px; color: var(--link); font-size: 14px; font-weight: 500; text-decoration: none; }
+    .more:hover { text-decoration: underline; }
+
+    .state { text-align: center; padding: 90px 8px; }
+    .state h1 { font-size: 28px; line-height: 1.15; margin: 0 0 10px; letter-spacing: -.02em; }
+    .state p { color: var(--muted); margin: 0 auto 26px; max-width: 26em; }
+    .state a { display: inline-block; background: var(--accent); color: var(--accent-ink); font-weight: 500; text-decoration: none; padding: 10px 22px; border-radius: 980px; }
+    .state a:hover { background: var(--accent-hover); }
+    .none { color: var(--muted); padding: 28px 0; text-align: center; }
+
+    @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+  </style>
+</head>
+<body>
+<nav><div class="in"><a href="/" class="nav-logo" aria-label="Litly"><img src="/logo.svg" alt="Litly" width="130" height="40"></a><div class="nav-auth" id="nav-auth"><a class="nav-btn" href="/signup">Log in</a></div></div></nav>
+<script src="/nav.js"></script>
+
+<main>
+  <button class="back" id="back" type="button" aria-label="Back"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>Back</button>
+  <div id="content" aria-live="polite"></div>
+</main>
+
+<script src="/avatars.js"></script>
+<script src="/common.js"></script>
+<script>
+const $ = (id) => document.getElementById(id);
+const postId = Number(location.pathname.split("/")[2]);
+const focusId = Number(new URLSearchParams(location.search).get("r")) || null;
+// Past this depth Reddit shows "Continue this thread" instead of indenting forever; fewer levels on phones.
+const maxDepth = () => (matchMedia("(max-width: 560px)").matches ? 4 : 7);
+let data = null, skew = 0, me = null;
+const collapsed = new Set();
+const now = () => Date.now() + skew;
+
+$("back").addEventListener("click", () => {
+  let same = false;
+  try { same = document.referrer && new URL(document.referrer).origin === location.origin; } catch {}
+  same && history.length > 1 ? history.back() : (location.href = "/");
+});
+
+function gone() {
+  document.title = "Gone · Litly";
+  $("content").innerHTML = '<div class="state"><h1>This one\'s gone.</h1><p>It may have been deleted by whoever posted it.</p><a href="/">See what\'s up tonight</a></div>';
+}
+
+// Reply box used for the top-level composer and for inline replies to a reply.
+function replyForm(parentId, { placeholder, onDone, autofocus }) {
+  const wrap = document.createElement("div");
+  const form = document.createElement("form"); form.className = "rform";
+  const ta = document.createElement("textarea"); ta.rows = 1; ta.maxLength = 280; ta.placeholder = placeholder; ta.setAttribute("aria-label", placeholder);
+  const hp = document.createElement("input"); hp.name = "website"; hp.tabIndex = -1; hp.autocomplete = "off"; hp.className = "hp"; hp.setAttribute("aria-hidden", "true");
+  const sb = document.createElement("button"); sb.textContent = "Reply"; sb.disabled = true;
+  const msg = document.createElement("p"); msg.className = "rmsg"; msg.setAttribute("role", "status");
+  ta.addEventListener("input", () => { sb.disabled = ta.value.trim().length < 2; });
+  form.append(ta, hp, sb);
+  if (!me) { // replying needs an account
+    ta.readOnly = true; ta.placeholder = "Log in to reply"; sb.textContent = "Log in"; sb.disabled = false; sb.type = "button";
+    form.addEventListener("click", () => { location.href = "/signup"; });
+    wrap.append(form);
+    return wrap;
+  }
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault(); sb.disabled = true; msg.textContent = "";
+    try {
+      const res = await fetch("/api/replies", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ post_id: postId, parent_id: parentId, body: ta.value, website: hp.value }) });
+      const out = await res.json();
+      if (res.status === 401) { location.href = "/signup"; return; }
+      if (!res.ok) throw new Error(out.error || "Couldn't reply.");
+      ta.value = ""; await onDone(out.id);
+    } catch (err) { msg.textContent = err.message; sb.disabled = false; }
+  });
+  wrap.append(form, msg);
+  if (autofocus) setTimeout(() => ta.focus(), 0);
+  return wrap;
+}
+
+function renderNode(r, kidsOf, depth, container, isChild, isLast) {
+  const seed = seedOf(r);
+  const dead = r.deleted;
+  const el = document.createElement("div"); el.className = "rep" + (isChild ? " child" : "") + (isLast ? " last" : ""); el.id = `r${r.id}`;
+  const kids = kidsOf.get(r.id) || [];
+  if (kids.length) el.classList.add("has-kids");
+  const total = (function count(id) { return (kidsOf.get(id) || []).reduce((n, k) => n + 1 + count(k.id), 0); })(r.id);
+
+  const head = document.createElement("div"); head.className = "rhead";
+  const img = dead ? document.createElement("span") : avatarEl(r, 28);
+  if (dead) img.className = "ghost-av";
+  const b = dead ? document.createElement("b") : nameEl(r);
+  if (dead) b.textContent = "[deleted]";
+  const tog = document.createElement("button"); tog.type = "button"; tog.className = "tog";
+  tog.innerHTML = '<svg viewBox="0 0 22 22" aria-hidden="true"><circle cx="11" cy="11" r="9"/><path d="M7 11h8M11 7v8"/></svg>'; // static markup
+  head.append(img, tog, b);
+  if (r.op && !dead) { const op = document.createElement("span"); op.className = "op"; op.textContent = "OP"; op.title = "Original poster"; head.append(op); }
+  const t = document.createElement("time"); t.dateTime = new Date(r.created_at).toISOString(); t.textContent = "\u00b7 " + ago(r.created_at, now());
+  head.append(t);
+
+  const sync = () => {
+    const c = collapsed.has(r.id);
+    el.classList.toggle("collapsed", c);
+    tog.setAttribute("aria-label", total ? `Expand thread, ${total} ${total === 1 ? "reply" : "replies"}` : "Expand thread");
+  };
+  const flip = () => { collapsed.has(r.id) ? collapsed.delete(r.id) : collapsed.add(r.id); sync(); };
+  tog.addEventListener("click", flip);
+  const rail = document.createElement("button"); rail.type = "button"; rail.className = "rail"; rail.setAttribute("aria-label", "Collapse thread");
+  rail.addEventListener("click", flip);
+
+  const body = document.createElement("div"); body.className = "rbody";
+  const p = document.createElement("p"); p.textContent = r.body; // never innerHTML user input
+  if (dead) p.className = "dead";
+  const acts = document.createElement("div"); acts.className = "ract";
+  const cb = document.createElement("button"); cb.type = "button"; cb.className = "cbtn"; cb.setAttribute("aria-label", "Collapse thread");
+  cb.innerHTML = '<svg viewBox="0 0 18 18" aria-hidden="true"><circle cx="9" cy="9" r="7.4"/><path d="M5.6 9h6.8"/></svg>'; // static markup
+  cb.addEventListener("click", flip);
+  const rb = pill("bubble", "Reply", true);
+  const slot = document.createElement("div"); slot.className = "inline-form";
+  rb.addEventListener("click", () => {
+    if (slot.firstChild) { slot.replaceChildren(); return; }
+    slot.replaceChildren(replyForm(r.id, { placeholder: `Reply to ${nameFor(seed)}`, autofocus: true, onDone: (id) => refresh(id) }));
+  });
+  acts.append(cb);
+  if (!dead) {
+    acts.append(heartPill(r, true, true), rb, sharePill(`/p/${postId}?r=${r.id}`, true));
+    if (me && r.username === me.username) {
+      const d = pill("trash", "Delete", true); d.classList.add("del");
+      d.addEventListener("click", async () => { if (await deleteMine("reply", r.id)) refresh(); });
+      acts.append(d);
+    }
+  }
+  body.append(p, acts, slot);
+
+  const sub = document.createElement("div"); sub.className = "kids";
+  el.append(head, rail, body, sub);
+  container.append(el);
+  if (depth >= maxDepth() && kids.length) {
+    // Too deep to keep indenting: open this reply as its own thread (the pinned view).
+    const more = document.createElement("a"); more.className = "more"; more.href = `/p/${postId}?r=${r.id}`;
+    more.textContent = `Continue this thread \u2192`;
+    body.append(more);
+  } else kids.forEach((k, i) => renderNode(k, kidsOf, depth + 1, sub, true, i === kids.length - 1));
+  sync();
+  return el;
+}
+
+function buildTree(replies, excludeId) {
+  const ids = new Set(replies.map((r) => r.id));
+  const kidsOf = new Map();
+  for (const r of replies) {
+    // A reply whose parent was removed falls back to the top level.
+    const key = r.parent_id != null && ids.has(r.parent_id) ? r.parent_id : null;
+    if (!kidsOf.has(key)) kidsOf.set(key, []);
+    kidsOf.get(key).push(r);
+  }
+  // Most hearts first, then oldest, so good replies float up and order is stable.
+  for (const list of kidsOf.values()) list.sort((a, b) => b.metoo - a.metoo || a.created_at - b.created_at);
+  return kidsOf;
+}
+
+function draw(highlightId) {
+  const { post, replies } = data;
+  const seed = seedOf(post);
+  const main = $("content");
+  const kidsOf = buildTree(replies);
+  const frag = document.createDocumentFragment();
+
+  const art = document.createElement("article"); art.className = "post";
+  const box = document.createElement("div");
+  const who = document.createElement("div"); who.className = "who";
+  const t = document.createElement("time"); t.dateTime = new Date(post.created_at).toISOString(); t.textContent = ago(post.created_at, now());
+  who.append(nameEl(post), t);
+  box.append(who);
+  if (post.body) { const text = document.createElement("p"); text.textContent = post.body; box.append(text); }
+  if (post.image) {
+    const im = new Image(); im.className = "pimg"; im.src = "/" + post.image; im.alt = "Photo attached to the post"; im.decoding = "async";
+    if (post.image_w && post.image_h) { im.width = post.image_w; im.height = post.image_h; }
+    box.append(im);
+  }
+  const pills = document.createElement("div"); pills.className = "pills";
+  const cb = pill("bubble", ""); cb.querySelector(".n").textContent = replies.length || "";
+  cb.setAttribute("aria-label", "Reply"); cb.addEventListener("click", () => document.querySelector(".top-form textarea")?.focus());
+  pills.append(heartPill(post, false), cb, sharePill(`/p/${post.id}`));
+  if (me && post.username === me.username) {
+    const d = pill("trash", ""); d.classList.add("del"); d.setAttribute("aria-label", "Delete post"); d.title = "Delete";
+    d.addEventListener("click", async () => { if (await deleteMine("post", post.id)) location.href = "/"; });
+    pills.append(d);
+  }
+  box.append(pills);
+  art.append(avatarEl(post, 44), box);
+  frag.append(art);
+
+  const top = replyForm(null, { placeholder: "Add a reply", onDone: (id) => refresh(id) });
+  top.classList.add("top-form");
+  frag.append(top);
+
+  // A shared reply is pinned above everything else, with its own replies.
+  const pinnedReply = focusId && replies.find((r) => r.id === focusId);
+  if (focusId) {
+    const pin = document.createElement("section"); pin.className = "pinned"; pin.setAttribute("aria-label", "Shared reply");
+    const label = document.createElement("p"); label.className = "label"; label.textContent = "Shared reply";
+    pin.append(label);
+    if (pinnedReply) renderNode(pinnedReply, kidsOf, 0, pin);
+    else { const g = document.createElement("p"); g.className = "gone"; g.textContent = "That reply is no longer available."; pin.append(g); }
+    frag.append(pin);
+  }
+
+  const h = document.createElement("h2");
+  h.textContent = replies.length ? `${replies.length} ${replies.length === 1 ? "reply" : "replies"}` : "Replies";
+  frag.append(h);
+  const list = document.createElement("div");
+  // The pinned reply (and its subtree) is shown once, at the top, so drop it from its old spot.
+  if (pinnedReply) for (const [k, v] of kidsOf) kidsOf.set(k, v.filter((r) => r.id !== focusId));
+  const roots = kidsOf.get(null) || [];
+  for (const r of roots) renderNode(r, kidsOf, 0, list);
+  if (!roots.length && !pinnedReply) { const n = document.createElement("p"); n.className = "none"; n.textContent = "No replies yet. Say something."; list.append(n); }
+  frag.append(list);
+
+  main.replaceChildren(frag);
+  if (highlightId) {
+    const el = document.getElementById(`r${highlightId}`);
+    if (el) { el.classList.add("flash"); el.scrollIntoView({ block: "center", behavior: "smooth" }); }
+  }
+}
+
+async function refresh(highlightId) {
+  try {
+    const res = await fetch(`/api/post?id=${postId}`);
+    if (res.status === 404) return gone();
+    if (!res.ok) throw new Error();
+    data = await res.json();
+    skew = data.now - Date.now();
+    me = (await litlyMe) || null;
+    document.title = `${data.post.body.slice(0, 60) || "Photo"} · Litly`;
+    draw(highlightId);
+  } catch { if (!data) $("content").innerHTML = '<div class="state"><p>Couldn\'t load this. Try again in a moment.</p></div>'; }
+}
+
+if (!Number.isInteger(postId)) gone(); else refresh();
+</script>
+</body>
+</html>
