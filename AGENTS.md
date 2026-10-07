@@ -25,7 +25,7 @@ Live at **https://litly.com**. An anonymous "what kept you up last night?" feed.
 - **Domains:** `www.litly.com` redirects to `litly.com`.
 
 ## Design
-Apple-style minimalism: black background, system SF Pro font and one blue accent. The brand logo (`public/logo.svg`) features a custom tired mascot wrapped in a blanket in place of the letter "I" (Pixar-style). The hero features an animated sleeping character (`public/sleepless.webp` with `public/sleepless.gif` fallback, preloaded with high fetch priority) that blinks and yawns over the main headline. Keep everything else simple, with no decorative noise.
+Apple-style minimalism: black background, system SF Pro font and one blue accent. The brand logo (`public/logo.svg`) features a custom tired mascot wrapped in a blanket in place of the letter "I" (Pixar-style). The hero features an animated sleeping character (`public/sleepless.webp` with `public/sleepless.gif` fallback, preloaded with high fetch priority) that blinks and yawns over the main headline ("Can't sleep?"). Subhead: "You're not alone tonight. Vent anonymously." Keep everything else simple, with no decorative noise.
 
 ## Develop and deploy
 ```sh
