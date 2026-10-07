@@ -433,16 +433,6 @@ function stopTyping() {
   isPaused = true;
 }
 
-body.addEventListener("focus", () => {
-  stopTyping();
-});
-
-body.addEventListener("blur", () => {
-  if (body.value.length === 0) {
-    typeTimer = setTimeout(startTyping, 800);
-  }
-});
-
 body.addEventListener("input", () => {
   adjustHeight();
   const n = body.value.trim().length;
